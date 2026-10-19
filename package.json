@@ -1,0 +1,31 @@
+{
+  "name": "rvidye.github.io",
+  "description": "Rushikesh Vidye's personal graphics research and workshop site.",
+  "type": "module",
+  "version": "0.0.1",
+  "private": true,
+  "engines": {
+    "node": ">=22.22.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build:demos": "node scripts/build-demos.mjs",
+    "check": "astro check",
+    "build": "node scripts/build-demos.mjs && astro check && astro build",
+    "preview": "astro preview",
+    "check:links": "node scripts/check-links.mjs",
+    "icons": "node scripts/make-icons.mjs",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^8.1.0",
+    "@astrojs/rss": "^4.0.19",
+    "@astrojs/sitemap": "^3.7.4",
+    "astro": "^7.4.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "sharp": "^0.35.5",
+    "typescript": "^6.0.3"
+  }
+}

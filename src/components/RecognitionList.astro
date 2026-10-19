@@ -1,0 +1,33 @@
+---
+/*
+ * Awards and accepted posters, each marked with a small rust star. Used on the
+ * Projects list and at the top of project and demo pages.
+ */
+interface Props {
+  items: { label: string; url?: string | undefined; year?: number | undefined }[];
+}
+
+const { items } = Astro.props;
+---
+
+{
+  items.length > 0 && (
+    <ul class="recognition" role="list" aria-label="Recognition">
+      {items.map((item) => (
+        <li>
+          <svg class="star" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6L2.5 9.4l6.6-.8z" />
+          </svg>
+          <span>{item.url ? <a href={item.url}>{item.label}</a> : item.label}</span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+<style>
+  .recognition { margin: 0; padding: 0; list-style: none; font-size: 0.85rem; line-height: 1.5; }
+  li { display: flex; gap: 0.45rem; align-items: baseline; }
+  li + li { margin-top: 0.3rem; }
+  .star { flex: none; width: 0.95em; height: 0.95em; translate: 0 0.12em; fill: var(--color-rust); }
+</style>

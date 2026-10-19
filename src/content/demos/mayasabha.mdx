@@ -1,0 +1,66 @@
+---
+title: 'MayaSabha: Hall of Illusion'
+description: A procedural, infinite palace inspired by the Maya Sabha from the Mahabharata, built entirely in a ShaderToy shader with signed distance fields and progressive path tracing. Second place at the HPG 2026 Student Competition.
+url: https://www.shadertoy.com/view/s3BGD1
+# ShaderToy's embed URL (Share → Embed). The page opens with the thumbnail and a
+# Run button that loads this player.
+embedUrl: "https://www.shadertoy.com/embed/s3BGD1?gui=true&t=10&paused=true&muted=false"
+host: ShaderToy
+technologies: [GLSL, ShaderToy, SDF ray marching, Path tracing]
+recognition:
+  - label: Second place, HPG 2026 Student Competition
+    url: https://www.highperformancegraphics.org/2026/student-competition/
+    year: 2026
+    badge: HPG 2026, second place
+# Listing thumbnail, link-preview picture, and the picture shown before Run.
+thumbnail:
+  src: ../../assets/demos/mayasabha/hall.png
+  alt: A long palace hall of fluted white columns with gold bands, a reflective floor, and arches receding into a bright doorway.
+# Frames for the homepage showreel.
+gallery:
+  - src: ../../assets/demos/mayasabha/hall.png
+    alt: A palace hall of fluted columns with a strip of rippling dark water down the middle.
+    caption: The hall
+  - src: ../../assets/demos/mayasabha/portals.png
+    alt: A corridor of glowing pink, green and blue arched portals reflected in a mirror-like floor.
+    caption: Portals
+  - src: ../../assets/demos/mayasabha/rotunda.png
+    alt: A pink crystal hovering over a round pedestal in a columned hall.
+    caption: Crystal pedestal
+  - src: ../../assets/demos/mayasabha/pool.png
+    alt: A dim blue chamber with a square pool of dark rippling water and a glowing crystal above it.
+    caption: Pool chamber
+---
+
+import Figure from '../../components/Figure.astro';
+import FigureGrid from '../../components/FigureGrid.astro';
+import portals from '../../assets/demos/mayasabha/portals.png';
+import pool from '../../assets/demos/mayasabha/pool.png';
+import rotunda from '../../assets/demos/mayasabha/rotunda.png';
+import running from '../../assets/demos/mayasabha/shadertoy-running.png';
+
+Every year, the [High Performance Graphics](https://www.highperformancegraphics.org/2026/) (HPG) conference hosts a student competition. About a week before the 2026 competition, [Cem](https://www.cemyuksel.com/) posted in our lab's Slack asking whether anyone was planning to take part.
+
+I wasn't. But I looked at the submission page and thought it might be fun to try something. A week later I had **MayaSabha: Hall of Illusion**, a procedural palace inspired by the [Mayasabha](https://en.wikipedia.org/wiki/Mayasabha) from the [*Mahabharata*](https://en.wikipedia.org/wiki/Mahabharata): a mythical hall famous for its grandeur, its illusions, and its deceptive architecture.
+
+<FigureGrid
+  items={[
+    { src: portals, alt: 'A corridor lined with glowing pink, green and blue arched portals, reflected in a mirror-like floor.', caption: 'Portals.' },
+    { src: pool, alt: 'A dim blue chamber with a square pool of dark rippling water and a glowing diamond crystal above it.', caption: 'A pool chamber.' },
+    { src: rotunda, alt: 'A columned hall with a pink crystal hovering over a round pedestal in the middle of the walkway.', caption: 'A crystal on its pedestal.' },
+  ]}
+/>
+
+The scene is built entirely inside a **[ShaderToy](https://www.shadertoy.com/view/s3BGD1) shader**, using [signed distance fields](https://iquilezles.org/articles/distfunctions/) (SDFs) to build an endlessly repeating palace of arches, columns, reflective floors, glowing portals and crystals. The architecture varies from chamber to chamber, so the hall feels like it goes on forever.
+
+For rendering, I implemented a **progressive Monte Carlo path tracer**: multiple indirect bounces, next-event estimation for the emissive geometry, MIS-style weighting, and glossy and specular BRDF sampling. Everything runs inside a fragment shader, which was an interesting constraint to work with.
+
+Performance was another story.
+
+<Figure src={running} alt="ShaderToy's player showing the portal corridor, with the control bar reading 9.6 fps at 960 by 540.">
+  Running in ShaderToy: 9.6 frames per second at 960 × 540.
+</Figure>
+
+The shader is reasonably fast for what it's doing, but I wouldn't call it real-time. I experimented with [SVGF](https://research.nvidia.com/publication/2017-07_spatiotemporal-variance-guided-filtering-real-time-reconstruction-path-traced) and [ReSTIR](https://benedikt-bitterli.me/restir/) to improve performance and convergence, but neither worked particularly well in my implementation. With the time I had, I decided to prioritize image quality over spending the rest of the competition debugging sampling and denoising.
+
+Somehow, this last-minute experiment won **[second place at the HPG 2026 Student Competition](https://www.highperformancegraphics.org/2026/student-competition/)**.

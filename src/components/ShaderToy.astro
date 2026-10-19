@@ -1,0 +1,110 @@
+---
+/*
+ * ShaderToy's player. With a `poster`, the page shows that render and a Run
+ * button; ShaderToy's player loads only when the reader presses it. That keeps
+ * a heavy shader from starting on page load, makes no request to ShaderToy
+ * until asked, and leaves a real picture in place if ShaderToy refuses to be
+ * framed. Without JavaScript the button is a link to the shader on ShaderToy.
+ */
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+
+interface Props {
+  /** A ShaderToy ID, view URL, or embed URL. Embed URLs retain their query. */
+  src?: string;
+  /** Short alias when passing only an ID. */
+  id?: string;
+  title: string;
+  /** A render of the shader, shown until the reader runs it. */
+  poster?: { src: ImageMetadata; alt: string };
+}
+
+const { src, id, title, poster } = Astro.props;
+const source = src ?? id ?? '';
+let shaderId = source;
+let suppliedEmbedUrl: string | undefined;
+if (!/^[A-Za-z0-9]{6}$/.test(shaderId)) {
+  let url: URL;
+  try {
+    url = new URL(source);
+  } catch {
+    throw new Error(`ShaderToy needs a shader ID or a valid ShaderToy URL: ${source}`);
+  }
+  if (!['https:', 'http:'].includes(url.protocol) || !['shadertoy.com', 'www.shadertoy.com'].includes(url.hostname.toLowerCase())) {
+    throw new Error(`Unsupported ShaderToy URL: ${source}`);
+  }
+  const match = url.pathname.match(/^\/(?:view|embed)\/([A-Za-z0-9]{6})\/?$/);
+  shaderId = match?.[1] ?? '';
+  if (match && url.pathname.startsWith('/embed/')) suppliedEmbedUrl = source;
+}
+if (!/^[A-Za-z0-9]{6}$/.test(shaderId)) throw new Error(`Invalid ShaderToy ID: ${shaderId}`);
+if (!title.trim()) throw new Error('ShaderToy needs a descriptive title.');
+const sourceUrl = `https://www.shadertoy.com/view/${shaderId}`;
+const embedUrl = suppliedEmbedUrl ?? `https://www.shadertoy.com/embed/${shaderId}?gui=true&t=0&paused=true&muted=true`;
+
+// Pressing Run is the reader asking for the shader, so the player starts unpaused.
+const runUrl = new URL(embedUrl);
+runUrl.searchParams.set('paused', 'false');
+const widths = poster ? [640, 960, 1280].filter((w) => w < poster.src.width).concat(poster.src.width) : [];
+---
+
+{/* The iframe is ShaderToy's own embed code (Share → Embed), plus a title for screen
+    readers. Its frameborder="0" is replaced by `border: 0` below (the attribute is obsolete). */}
+<figure class="shadertoy">
+  {
+    poster ? (
+      <div class="stage" data-player={runUrl.href} data-title={title}>
+        <Image src={poster.src} alt={poster.alt} widths={widths} sizes="(min-width: 58rem) 56rem, calc(100vw - 2rem)" loading="eager" />
+        <a class="run" href={sourceUrl}><span aria-hidden="true">▶</span> Run the shader</a>
+      </div>
+    ) : (
+      <iframe width="640" height="360" src={embedUrl} title={title} allowfullscreen />
+    )
+  }
+  <figcaption>
+    {Astro.slots.has('default') && <><slot /> · </>}
+    <a href={sourceUrl}>Open on ShaderToy <span aria-hidden="true">↗</span></a>
+  </figcaption>
+</figure>
+
+<script>
+  for (const stage of document.querySelectorAll<HTMLElement>('.shadertoy .stage[data-player]')) {
+    const run = stage.querySelector<HTMLAnchorElement>('.run');
+    if (!run) continue;
+    run.setAttribute('role', 'button');
+    run.addEventListener('click', (event) => {
+      event.preventDefault();
+      const frame = document.createElement('iframe');
+      frame.width = '640';
+      frame.height = '360';
+      frame.src = stage.dataset.player!;
+      frame.title = stage.dataset.title!;
+      frame.allowFullscreen = true;
+      stage.replaceChildren(frame);
+      frame.focus();
+    });
+  }
+</script>
+
+<style>
+  .stage { position: relative; aspect-ratio: 16 / 9; background: var(--color-paper-shade); }
+  .stage :global(img) { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .shadertoy :global(iframe) { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border: 0; background: var(--color-paper-shade); }
+  .run {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+    padding: 0.55em 1.1em;
+    background: var(--color-chip);
+    color: var(--color-chip-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+  }
+  .run:hover { color: var(--color-chip-accent); }
+  .run span { margin-right: 0.35em; color: var(--color-chip-accent); }
+  figcaption { margin-top: var(--space-2); color: var(--color-ink-muted); font-size: var(--text-sm); }
+</style>

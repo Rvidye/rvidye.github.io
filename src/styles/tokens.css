@@ -1,0 +1,122 @@
+/*
+ * Design tokens.
+ *
+ * Serif and mono are served by Astro's Fonts API. The sans face uses the
+ * operating system's reading font, with no additional font download.
+ */
+:root {
+  color-scheme: light;
+
+  /* Colour: warm paper, forest ink, and a rust accent. Text colours here
+     passes WCAG AA (4.5:1) on both --color-paper and --color-paper-shade. */
+  --color-paper: #f5f0e4;
+  --color-paper-shade: #eae4d5;
+  --color-ink: #263b31;
+  --color-ink-muted: #5e655a;
+  --color-rule: #cfcebd;
+  --color-accent: #214d3b;
+  --color-focus: #ad4326;
+  --color-rust: #ad4326;
+  --color-note: #e5e8c9;
+  --color-selection: #dce1a6;
+
+  /* Labels drawn on top of pictures (Play buttons, captions, award ribbons).
+     They stay the same in both themes, because the picture under them does. */
+  --color-chip: rgb(245 240 228 / 0.94);
+  --color-chip-ink: #263b31;
+  --color-chip-accent: #ad4326;
+  --color-ribbon: #ad4326;
+  --color-ribbon-ink: #fbf6ea;
+  --font-hand: 'Segoe Print', 'Bradley Hand', 'Comic Sans MS', cursive;
+  --font-sans: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+
+  /* Dark sections (the workbench, viewer chrome). Text colours pass AA on both
+     --color-night and --color-night-raised. */
+  --color-night: #191c1a;
+  --color-night-raised: #222623;
+  --color-night-rule: #343a36;
+  --color-night-ink: #ece8de;
+  --color-night-muted: #a9ada6;
+  --color-night-accent: #e2906f;
+
+  /* Type: a quiet serif for headings and a clear sans face for reading. */
+  --text-annotation: 0.75rem;
+  --text-xs: 0.8rem;
+  --text-sm: 0.875rem;
+  --text-ui: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.875rem;
+  --text-2xl: 3rem;
+  --text-3xl: 3.5rem;
+  --text-display: clamp(2.75rem, 1.5rem + 4.4vw, 5rem);
+
+  --leading-body: 1.7;
+  --leading-tight: 1.15;
+
+  /* Space */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2.5rem;
+  --space-7: 4rem;
+  --space-8: 6rem;
+
+  /* Layout */
+  --measure: 68ch;
+  --width-wide: 52rem;
+  --width-site: 68rem;
+  --width-meta: 10rem;
+  --gutter: clamp(1rem, 4vw, 2rem);
+  --grid-gap: clamp(1rem, 2.5vw, 2rem);
+  /* The text column of the page grid (columns 1–8 of 12), for content inside an
+     element as wide as the grid. See .grid in global.css. */
+  --text-span: calc(66.6667% - var(--grid-gap) / 3);
+}
+
+
+/*
+ * Dark theme: the same warm palette at night. It follows the system setting
+ * unless the reader picks one with the header switch, which sets
+ * data-theme="light" or "dark" on <html> (see BaseLayout.astro).
+ * Text colours pass WCAG AA (4.5:1) on both --color-paper and --color-paper-shade.
+ * The two blocks must stay identical.
+ */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-paper: #161917;
+  --color-paper-shade: #20241f;
+  --color-ink: #e8e3d6;
+  --color-ink-muted: #a8ada3;
+  --color-rule: #3b413c;
+  --color-accent: #a3c9b3;
+  --color-focus: #e9997a;
+  --color-rust: #e9997a;
+  --color-note: #2b2f24;
+  --color-selection: #4c5a2c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --color-paper: #161917;
+    --color-paper-shade: #20241f;
+    --color-ink: #e8e3d6;
+    --color-ink-muted: #a8ada3;
+    --color-rule: #3b413c;
+    --color-accent: #a3c9b3;
+    --color-focus: #e9997a;
+    --color-rust: #e9997a;
+    --color-note: #2b2f24;
+    --color-selection: #4c5a2c;
+  }
+}
+
+/* Phones: one column, so the text column is the full width. */
+@media (max-width: 47.99rem) {
+  :root {
+    --text-span: 100%;
+  }
+}

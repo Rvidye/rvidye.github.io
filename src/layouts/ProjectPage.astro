@@ -1,0 +1,135 @@
+---
+/*
+ * The page shell every project and demo page shares, laid on the page grid
+ * (see .grid in global.css) so everything lines up on the same lines:
+ *
+ *   text column (1–8)                        aside (9–12)
+ *   back link
+ *   kind, title, facts, recognition          fact sheet: links, made with,
+ *                                            related, demos
+ *   lead (live demo or video), full width
+ *   story: text on the text column; pictures, video, sliders full width,
+ *   their captions on the text column
+ *
+ * The one-sentence `description` is for search results and link previews only;
+ * it is not repeated on the page.
+ */
+import type { ImageMetadata } from 'astro';
+import BaseLayout from './BaseLayout.astro';
+import RecognitionList from '../components/RecognitionList.astro';
+import type { LinkItem } from '../lib/content';
+import '../styles/prose.css';
+
+interface Detail {
+  label: string;
+  items: { label: string; url?: string | undefined }[];
+}
+
+interface Props {
+  title: string;
+  description: string;
+  /** Small label above the title, e.g. "Project" or "Demo". */
+  kind: string;
+  /** Short facts under the title, e.g. ["Completed", "2025–2026"]. */
+  facts: string[];
+  links: LinkItem[];
+  /** Awards and accepted posters, marked under the title. */
+  recognition?: { label: string; url?: string | undefined }[];
+  details?: Detail[];
+  back: { label: string; href: string };
+  /** Nav section to highlight, e.g. "/projects/". */
+  section: string;
+  image?: { src: ImageMetadata; alt: string } | undefined;
+  draft?: boolean;
+  /** Design specimen pages under /dev/templates/. */
+  preview?: boolean;
+}
+
+const { title, description, kind, facts, links, recognition = [], details = [], back, section, image, draft = false, preview = false } = Astro.props;
+// The fact sheet: the project's own links, then what it was made with, then
+// related links and anything else passed in `details`.
+const own = links.filter((link) => !link.prefix);
+const groups = new Map<string, { label: string; url?: string | undefined }[]>();
+for (const link of links.filter((l) => l.prefix)) {
+  const label = link.prefix!.replace(/:$/, '');
+  groups.set(label, [...(groups.get(label) ?? []), { label: link.label, url: link.url }]);
+}
+const sheet: Detail[] = [
+  { label: 'Links', items: own.map((link) => ({ label: link.label, url: link.url })) },
+  ...details.filter((d) => d.label === 'Made with'),
+  ...[...groups].map(([label, items]) => ({ label, items })),
+  ...details.filter((d) => d.label !== 'Made with'),
+].filter((d) => d.items.length > 0);
+---
+
+<BaseLayout title={title} description={description} section={section} image={image} noindex={preview}>
+  <article class="project grid">
+    <p class="back-link meta"><a href={back.href}>← {back.label}</a></p>
+    <header class="project-header col-text">
+      {preview && <p class="specimen meta">Design specimen · Example structure, not a real project.</p>}
+      <p class="kind meta">{kind}</p>
+      <h1>{title}</h1>
+      <ul class="inline-list meta facts" role="list" aria-label="Details">
+        {draft && <li class="draft-marker">Draft</li>}
+        {facts.map((fact) => <li>{fact}</li>)}
+      </ul>
+      {recognition.length > 0 && <div class="project-recognition"><RecognitionList items={recognition} /></div>}
+    </header>
+
+    {
+      sheet.length > 0 && (
+        <aside class="fact-sheet col-aside" aria-label="About this project">
+          <dl>
+            {sheet.map((group) => (
+              <div>
+                <dt>{group.label}</dt>
+                <dd>
+                  <ul role="list">
+                    {group.items.map((item) => (
+                      <li>{item.url ? <a href={item.url}>{item.label}</a> : item.label}</li>
+                    ))}
+                  </ul>
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </aside>
+      )
+    }
+
+    {draft && !preview && <p class="draft-banner col-text">Draft. This page is visible only in local development.</p>}
+
+    {Astro.slots.has('lead') && <div class="lead"><slot name="lead" /></div>}
+
+    <div class="prose project-prose"><slot /></div>
+
+    <div class="after col-text"><slot name="after" /></div>
+  </article>
+</BaseLayout>
+
+<style>
+  .back-link { margin-bottom: var(--space-5); }
+  .project-header { margin-bottom: var(--space-6); }
+  .kind { margin-bottom: var(--space-2); }
+  h1 { font-size: clamp(2.4rem, 5vw, 3.6rem); letter-spacing: -0.035em; margin-bottom: var(--space-3); }
+  .facts { margin: 0; }
+  .project-recognition { margin-top: var(--space-3); }
+  .specimen { color: var(--color-accent); margin-bottom: var(--space-5); }
+
+  /* The fact sheet starts on the aside line, level with the kind label. */
+  .fact-sheet { margin-bottom: var(--space-6); font-family: var(--font-sans); font-size: var(--text-sm); }
+  .fact-sheet dl { margin: 0; }
+  .fact-sheet dl > div + div { margin-top: var(--space-3); }
+  dt { margin-bottom: 0.1rem; color: var(--color-ink-muted); font-size: var(--text-xs); letter-spacing: 0.04em; text-transform: uppercase; }
+  dd { margin: 0; }
+  dd ul { margin: 0; padding: 0; list-style: none; }
+
+  .lead { margin-block: 0 var(--space-6); }
+  .lead :global(figure) { margin: 0; }
+
+  .after :global(.detail-section) { margin-top: var(--space-7); padding-top: var(--space-5); border-top: 1px solid var(--color-rule); }
+
+  @media (min-width: 48rem) {
+    .fact-sheet { padding-top: 0.15rem; }
+  }
+</style>

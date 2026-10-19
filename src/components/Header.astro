@@ -1,0 +1,141 @@
+---
+import { NAV, SITE } from '../lib/site';
+
+interface Props {
+  section?: string;
+}
+
+const path = Astro.props.section ?? Astro.url.pathname;
+const isCurrent = (href: string) => href === '/' ? path === '/' : path.startsWith(href);
+---
+
+<header class="site-header">
+  <div class="wrap inner">
+    <a class="site-name" href="/" aria-current={path === '/' ? 'page' : undefined}>
+      {/* The Utah teapot, as in public/favicon.svg. */}
+      <svg class="mark" viewBox="0 0 270 150" aria-hidden="true" focusable="false">
+        <path transform="matrix(.1 0 0 -.1 0 150)" d="m1347 1419c-50-12-77-27-77-43 0-7 18-36 40-64 22-27 40-52 40-54 0-3-53-8-117-12-236-14-367-41-411-86-28-27-150-282-184-382l-19-56-32 10c-50 18-109 86-136 158-54 143-89 198-146 228-33 17-275 31-275 16 0-5 29-24 65-43 69-35 122-88 151-150 10-20 33-92 51-161 19-69 45-149 59-178 33-68 109-144 174-173 44-20 55-31 78-78 18-36 48-73 91-110 36-31 83-75 105-99 47-50 108-72 273-98 150-23 526-23 676 0 168 26 232 50 287 104 26 26 74 71 108 100 38 33 69 70 84 101 13 28 34 54 48 61 61 29 193 123 244 175 32 33 70 85 88 123 28 57 33 77 33 139 0 56-4 77-21 100-47 64-142 88-406 99l-138 6-32 61c-26 49-40 64-75 79-50 22-202 45-367 56l-119 7 35 45c18 25 37 51 41 57 31 51-103 89-216 62zm1083-490c19-6 43-19 53-27 58-50-33-249-158-343-28-21-55-39-58-39-4 0-7 13-7 28 0 59-44 200-115 366l-17 39 134-6c73-3 149-11 168-18z" />
+      </svg>
+      <span>{SITE.title}</span>
+    </a>
+    <nav aria-label="Main">
+      <ul role="list">
+        {NAV.map((item) => item.href && (
+          <li><a href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>{item.label}</a></li>
+        ))}
+      </ul>
+    </nav>
+    <div class="theme-item" hidden>
+      <button class="theme-toggle" type="button" aria-pressed="false" title="Dark theme">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2" />
+          <path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" />
+        </svg>
+        <span class="visually-hidden">Dark theme</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<script>
+  // The theme switch: pressed means dark. The choice is remembered on this
+  // device; until the reader makes one, the system setting decides.
+  const item = document.querySelector<HTMLElement>('.theme-item');
+  const button = document.querySelector<HTMLButtonElement>('.theme-toggle');
+  if (item && button) {
+    const root = document.documentElement;
+    const system = matchMedia('(prefers-color-scheme: dark)');
+    const isDark = () => (root.dataset.theme ? root.dataset.theme === 'dark' : system.matches);
+    const sync = () => button.setAttribute('aria-pressed', String(isDark()));
+    button.addEventListener('click', () => {
+      const theme = isDark() ? 'light' : 'dark';
+      root.dataset.theme = theme;
+      try {
+        localStorage.setItem('theme', theme);
+      } catch {}
+      sync();
+    });
+    system.addEventListener('change', sync);
+    item.hidden = false;
+    sync();
+  }
+</script>
+
+<style>
+  .inner {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem 1.75rem;
+    padding-block: 1.75rem 1rem;
+  }
+
+  .site-name {
+    margin-right: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: .7rem;
+    font-family: var(--font-sans);
+    font-size: .85rem;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    text-decoration: none;
+  }
+
+  .mark { width: 2.7rem; height: auto; fill: var(--color-rust); transition: rotate 0.3s ease; transform-origin: 50% 90%; }
+  /* A small pour when the home link is hovered. */
+  .site-name:hover .mark { rotate: -8deg; }
+  @media (prefers-reduced-motion: reduce) { .mark { transition: none; } }
+
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1.65rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+  }
+
+  nav a {
+    display: block;
+    padding-block: 0.25rem;
+    color: var(--color-ink-muted);
+    text-decoration: none;
+  }
+
+  .theme-toggle {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    margin-block: -0.25rem;
+    padding: 0;
+    border: 1px solid var(--color-rule);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--color-ink-muted);
+    cursor: pointer;
+  }
+  .theme-toggle svg { width: 1.05rem; height: 1.05rem; }
+  .theme-toggle:hover { border-color: var(--color-ink); color: var(--color-rust); }
+  /* The filled half flips sides in the dark theme. */
+  .theme-toggle[aria-pressed='true'] svg { rotate: 180deg; }
+
+  nav a:hover,
+  nav a[aria-current='page'] {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.4em;
+  }
+
+  /* Phones: name and theme switch on the first line, the menu below. */
+  @media (max-width: 38rem) {
+    .inner { padding-top: 1.75rem; }
+    nav { order: 1; flex-basis: 100%; }
+    ul { gap: 0.5rem 1.4rem; }
+  }
+</style>

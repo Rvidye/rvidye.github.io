@@ -1,0 +1,111 @@
+---
+title: Rendering Demos
+description: A collection of rendering experiments, demos, and questionable engineering decisions from my early days of learning computer graphics. Everything from real-time global illumination and volumetric lighting to procedural environments, built using OpenGL, DirectX, WebGL, and whatever else I could get my hands on.
+kind: project
+status: completed
+order: 6
+startDate: '2021'
+endDate: '2024'
+tags: [real-time rendering]
+technologies: [OpenGL, DirectX 11, WebGL]
+links:
+  video: https://www.youtube.com/playlist?list=PL8JzhBQ1IHQjimSzrf759Y4G_mm8KGBis
+# Listing thumbnail and link-preview picture.
+heroImage:
+  src: ../../assets/work/rendering-demos/superposition.jpg
+  alt: A red-lit industrial lab with a large glass and metal machine in the middle, from the Superposition demo.
+---
+
+import YouTube from '../../components/YouTube.astro';
+import superposition from '../../assets/work/rendering-demos/superposition.jpg';
+import mothersDay from '../../assets/work/rendering-demos/mothers-day.jpg';
+import directx11 from '../../assets/work/rendering-demos/directx-11.jpg';
+import aNewHome from '../../assets/work/rendering-demos/a-new-home.jpg';
+import guruDutt from '../../assets/work/rendering-demos/guru-dutt.jpg';
+import cinephile from '../../assets/work/rendering-demos/cinephile.jpg';
+
+*A little archive of my adventures in real-time computer graphics.*
+
+Before getting into graphics research, I spent quite a few years experimenting with real-time rendering, building demos, implementing visual effects, and occasionally spending days debugging something that turned out to be a single line of code.
+
+Here are some of my favorite projects from those days. Some turned out pretty well, others... not so much. But I had a lot of fun making them.
+
+## 1. Superposition
+
+<YouTube id="t7KAha8s1iE" title="Superposition, an OpenGL demo" poster={superposition} />
+
+Inspired by UNIGINE's Superposition benchmark, this demo was my attempt to test the limits of OpenGL and, more importantly, my patience.
+
+It eventually became my final project presentation at AstromediComp's RTR 5 batch, presented on January 4th, Isaac Newton's birthday. A rather fitting tribute to the mathematician whose work makes half of computer graphics possible.
+
+There's a lot going on here, including some rather questionable physics.
+
+**Effects:** Voxel Global Illumination (VXGI), Physically Based Rendering (PBR), Screen Space Reflections (SSR), Screen Space Ambient Occlusion (SSAO), Exponential Shadow Maps (ESM), Volumetric Lighting, and Temporal Anti-Aliasing (TAA).
+
+## 2. A Mother's Day Special
+
+<YouTube id="uWI0NRxRAA8" title="A Mother's Day Special, a WebGL demo" poster={mothersDay} />
+
+I wanted to make something memorable for Mother's Day, so I ended up creating this little wholesome scene entirely in WebGL.
+
+I'm still surprised I managed to finish it because WebGL almost made me lose my mind. I kept running into DirectX 11 errors through ANGLE, particularly around shader optimizations. Apparently, just because the specification says something should work doesn't mean the underlying graphics driver agrees.
+
+But at least the final result is cute.
+
+**Effects:** Cel Shading, Geometry Outlines, Procedural Grass, Terrain Rendering, and Water.
+
+## 3. DirectX 11 Demo
+
+<YouTube id="xTq7zJkaFBU" title="A collaborative DirectX 11 demo" poster={directx11} />
+
+Directed by **Dr. Vijay Gokhale**, this was a collaborative DirectX 11 project involving 27 people, including me.
+
+I spent most of my time working on the rendering engine's architecture, keeping everything performant, and making sure the project didn't spontaneously combust every time someone committed new code.
+
+Coordinating an engine with 26 other developers, some of whom were still getting comfortable with C++, was an interesting experience, to say the least.
+
+I probably learned as much about software engineering and debugging other people's code as I did about rendering.
+
+## 4. A New Home
+
+<YouTube id="qMjk4k_YVFo" title="A New Home, a rendering demo" poster={aNewHome} />
+
+This demo was probably the beginning of my obsession with **Global Illumination**, especially when working on the first indoor scene.
+
+I built it with two of my close friends, and we had a great time experimenting with lighting, environments, and storytelling.
+
+Does the story make any sense? Not really.
+
+Does it look cool AF? Absolutely.
+
+## 5. A Tribute to Guru Dutt
+
+<YouTube id="6yABiQ7ILKQ" title="A Tribute to Guru Dutt, a WebGL demo" poster={guruDutt} />
+
+Another WebGL experiment, this time attempting to pay tribute to the legendary Indian filmmaker **Guru Dutt**.
+
+I distinctly remember us thinking we were creating an absolute masterpiece.
+
+Looking back at it now, I'm not entirely sure what we were thinking.
+
+It's a pretty depressing watch, so consider yourself warned.
+
+## 6. The Cinephile
+
+<YouTube id="inNrDcDrMUo" title="The Cinephile, a student demo running on a PSP emulator" poster={cinephile} />
+
+*Student project.* This one isn't my project, but I wanted to include it because I'm genuinely proud of the students who made it.
+
+**The Cinephile** was developed by students I mentored, and it runs on **PPSSPP, a PlayStation Portable emulator**.
+
+For context, the original PSP had a 166 MHz graphics processor, a theoretical throughput of around 4 million polygons per second, and just 2 MB of embedded eDRAM for graphics (32 MB in total).
+
+Seeing what they managed to achieve within those hardware constraints is pretty impressive. I had no part in developing the demo itself, but it's easily one of my favorite student projects.
+
+## Still interested?
+
+These are just a handful of the demos I've worked on or been involved with over the years.
+
+If you have a little too much free time, here's the [**full YouTube playlist**](https://www.youtube.com/playlist?list=PL8JzhBQ1IHQjimSzrf759Y4G_mm8KGBis).
+
+Fair warning: the quality varies considerably. So does my taste in music.

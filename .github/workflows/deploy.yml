@@ -1,0 +1,51 @@
+# Builds the site on every push and pull request; deploys to GitHub Pages only
+# from the main branch. Requires Settings → Pages → Build and deployment →
+# Source: "GitHub Actions". No secrets are needed.
+#
+# Based on Astro's GitHub Pages guide: https://docs.astro.build/en/guides/deploy/github/
+
+name: Build and deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Allows running the workflow by hand from the Actions tab.
+  workflow_dispatch:
+
+# Least privilege: the build only reads the repository. Pages permissions are
+# granted to the deploy job alone.
+permissions:
+  contents: read
+
+# One deployment at a time; never cancel one that is already running.
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+
+      # Installs with npm (detected from package-lock.json) on Node 24, runs
+      # `npm run build` (demos, then type check, then site) and uploads dist/.
+      - name: Install, build and upload the site
+        uses: withastro/action@v6
+
+  deploy:
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

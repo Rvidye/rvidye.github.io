@@ -1,0 +1,51 @@
+---
+title: OpenVDB Volume Path Tracer
+description: An experimental real-time volume path tracer using OpenVDB and CUDA–OpenGL interoperability. What started as a parallel programming demo turned into an adventure involving volumetric rendering, questionable engineering decisions, Linux and NVIDIA driver issues, and writing an X11 backend for Dear ImGui for absolutely no good reason.
+kind: project
+status: completed
+order: 7
+startDate: '2022'
+endDate: '2022'
+tags: [rendering, volumes]
+technologies: [CUDA, OpenGL, OpenVDB, Dear ImGui, Linux]
+video:
+  type: youtube
+  id: YiZO55t-wvk
+  title: OpenVDB Volume Tracing using OpenGL and CUDA
+  poster: ../../assets/work/openvdb-volume-tracer/video-thumbnail.jpg
+links:
+  video: https://www.youtube.com/watch?v=YiZO55t-wvk
+  code: https://github.com/Rvidye/HPP
+# Listing thumbnail and link-preview picture.
+heroImage:
+  src: ../../assets/work/openvdb-volume-tracer/cloud.jpg
+  alt: A billowing smoke cloud with glowing orange embers inside it, against black.
+---
+
+As a group leader for AstromediComp's Real-Time Rendering batch, I had to build a High Performance Parallel Programming (HPP) demo using CUDA or OpenCL. Around the same time, I was exploring [OpenVDB](https://www.openvdb.org/) and volumetric rendering, and thought building a real-time volume path tracer would be a pretty sick project.
+
+So, I wrote a rather terrible path tracer to traverse VDB volumes and render them in real time using **CUDA–OpenGL interoperability**. The renderer was fairly basic, but it worked!
+
+## Making life unnecessarily difficult
+
+For some reason, I was particularly determined to build this entire project **natively on Linux**.
+
+If you've ever dealt with NVIDIA drivers, CUDA, OpenCL, and graphics development on Linux, you probably know where this is going.
+
+I couldn't get my OpenCL kernels to compile properly, so I ended up using CUDA. But apparently that wasn't enough suffering for me.
+
+I also wanted to use [Dear ImGui](https://github.com/ocornut/imgui) for the interface. Unfortunately, I couldn't find a native X11 platform backend for it at the time, so naturally, I decided to write one myself.
+
+I spent an unreasonable amount of time getting that thing to work. I believe it might have been one of the only standalone X11 backends for ImGui available on GitHub at the time.
+
+It barely worked, though, so perhaps that's for the best.
+
+Maybe someone can get Claude to write a proper one these days. Personally, I'm quite happy developing on Windows now.
+
+## Looking back
+
+Despite all the unnecessary detours, I think this project was one of the things that got me seriously interested in **physically based volumetric rendering**.
+
+I kept coming back to the problem of how light interacts with participating media, which eventually became one of the main motivations behind [FoxRT](/work/foxrt/), my spectral volumetric path tracer.
+
+So I guess all that suffering was worth something after all.

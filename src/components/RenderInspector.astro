@@ -1,0 +1,318 @@
+---
+/*
+ * A render shown the way a graphics programmer looks at one: in a viewer with
+ * debug views (beauty, luminance, false colour) and a pixel probe. Every value
+ * shown is computed from the actual image in the browser.
+ *
+ * Without JavaScript it is simply the image and its caption.
+ */
+import type { ImageMetadata } from 'astro';
+import { Image, getImage } from 'astro:assets';
+
+interface Props {
+  image: { src: ImageMetadata; alt: string };
+  /** Short label for the viewer's title bar, e.g. "FoxRT". */
+  label: string;
+  /** Figure number shown in the title bar and caption, e.g. "Fig. 1". */
+  figure: string;
+  /** Rendered width at each breakpoint, for srcset selection. */
+  sizes: string;
+}
+
+const { image, label, figure, sizes } = Astro.props;
+const { width, height } = image.src;
+// Higher quality than the display copy: false colour exaggerates compression artefacts.
+const analysis = await getImage({ src: image.src, width, format: 'webp', quality: 92 });
+const widths = [640, 960, 1280, 1600].filter((w) => w < width).concat(width);
+---
+
+<figure class="inspector" data-render-inspector data-source={analysis.src}>
+  <div class="viewer">
+    <p class="titlebar" aria-hidden="true">
+      <span class="dot"></span>
+      <span>{figure} · {label}</span>
+      <span class="dims">{width} × {height}</span>
+    </p>
+    <div class="stage">
+      <Image
+        src={image.src}
+        alt={image.alt}
+        widths={widths}
+        sizes={sizes}
+        quality={85}
+        loading="eager"
+        fetchpriority="high"
+      />
+      <canvas hidden aria-hidden="true"></canvas>
+    </div>
+    <div class="toolbar" hidden>
+      <div class="modes" role="group" aria-label="Debug view">
+        <button type="button" data-mode="beauty" aria-pressed="true">Beauty</button>
+        <button type="button" data-mode="luminance" aria-pressed="false">Luminance</button>
+        <button type="button" data-mode="false-colour" aria-pressed="false">False colour</button>
+      </div>
+      <output class="probe">Point at the render to probe a pixel</output>
+    </div>
+  </div>
+  <figcaption>
+    <slot />
+  </figcaption>
+</figure>
+
+<script>
+  // sRGB 8-bit → linear, as a lookup table.
+  const LINEAR = Float32Array.from({ length: 256 }, (_, i) => {
+    const c = i / 255;
+    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  const toSrgb8 = (l: number) => Math.round(255 * (l <= 0.0031308 ? 12.92 * l : 1.055 * l ** (1 / 2.4) - 0.055));
+  const luminance = (d: Uint8ClampedArray, i: number) =>
+    0.2126 * LINEAR[d[i]!]! + 0.7152 * LINEAR[d[i + 1]!]! + 0.0722 * LINEAR[d[i + 2]!]!;
+
+  // A perceptual-ish heat ramp from dark blue through teal and yellow to red.
+  const RAMP: [number, number, number, number][] = [
+    [0.0, 18, 22, 64],
+    [0.25, 33, 102, 172],
+    [0.5, 54, 168, 150],
+    [0.72, 238, 214, 92],
+    [0.88, 236, 126, 52],
+    [1.0, 196, 36, 44],
+  ];
+  function ramp(t: number): [number, number, number] {
+    for (let k = 1; k < RAMP.length; k++) {
+      const [t1, r1, g1, b1] = RAMP[k]!;
+      if (t <= t1) {
+        const [t0, r0, g0, b0] = RAMP[k - 1]!;
+        const f = (t - t0) / (t1 - t0);
+        return [r0 + f * (r1 - r0), g0 + f * (g1 - g0), b0 + f * (b1 - b0)];
+      }
+    }
+    const [, r, g, b] = RAMP[RAMP.length - 1]!;
+    return [r, g, b];
+  }
+
+  type Mode = 'beauty' | 'luminance' | 'false-colour';
+
+  function buildView(mode: Exclude<Mode, 'beauty'>, src: ImageData): ImageData {
+    const out = new ImageData(src.width, src.height);
+    const s = src.data;
+    const d = out.data;
+    for (let i = 0; i < s.length; i += 4) {
+      const y = luminance(s, i);
+      if (mode === 'luminance') {
+        d[i] = d[i + 1] = d[i + 2] = toSrgb8(y);
+      } else {
+        // Display-referred luminance spreads the ramp across what the eye sees.
+        const [r, g, b] = ramp(Math.min(1, y ** (1 / 2.2)));
+        d[i] = r;
+        d[i + 1] = g;
+        d[i + 2] = b;
+      }
+      d[i + 3] = 255;
+    }
+    return out;
+  }
+
+  function enhance(root: HTMLElement): void {
+    const stage = root.querySelector<HTMLElement>('.stage')!;
+    const canvas = root.querySelector('canvas')!;
+    const toolbar = root.querySelector<HTMLElement>('.toolbar')!;
+    const probe = root.querySelector('output')!;
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('button[data-mode]')];
+    if (window.matchMedia('(hover: none)').matches) probe.textContent = 'Tap or drag across the render to probe a pixel';
+    const idleText = probe.textContent ?? '';
+    const views = new Map<Mode, ImageData>();
+    let source: Promise<ImageData> | undefined;
+
+    // The full-resolution pixels, fetched only once someone interacts.
+    function pixels(): Promise<ImageData> {
+      source ??= new Promise((resolve, reject) => {
+        const img = new Image();
+        img.decoding = 'async';
+        img.onload = () => {
+          const c = document.createElement('canvas');
+          c.width = img.naturalWidth;
+          c.height = img.naturalHeight;
+          const ctx = c.getContext('2d', { willReadFrequently: true })!;
+          ctx.drawImage(img, 0, 0);
+          resolve(ctx.getImageData(0, 0, c.width, c.height));
+        };
+        img.onerror = reject;
+        img.src = root.dataset.source!;
+      });
+      return source;
+    }
+
+    async function setMode(mode: Mode): Promise<void> {
+      for (const b of buttons) b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
+      root.dataset.mode = mode;
+      if (mode === 'beauty') {
+        canvas.hidden = true;
+        return;
+      }
+      const src = await pixels();
+      let view = views.get(mode);
+      if (!view) {
+        view = buildView(mode, src);
+        views.set(mode, view);
+      }
+      canvas.width = src.width;
+      canvas.height = src.height;
+      canvas.getContext('2d')!.putImageData(view, 0, 0);
+      canvas.hidden = false;
+    }
+
+    async function inspect(event: PointerEvent): Promise<void> {
+      const rect = stage.getBoundingClientRect();
+      const fx = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+      const fy = Math.min(1, Math.max(0, (event.clientY - rect.top) / rect.height));
+      root.style.setProperty('--split', `${(fx * 100).toFixed(2)}%`);
+      const src = await pixels();
+      const x = Math.min(src.width - 1, Math.floor(fx * src.width));
+      const y = Math.min(src.height - 1, Math.floor(fy * src.height));
+      const i = (y * src.width + x) * 4;
+      const [r, g, b] = [src.data[i]!, src.data[i + 1]!, src.data[i + 2]!];
+      const hex = [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('');
+      probe.textContent = `x ${x}  y ${y}   rgb ${r} ${g} ${b}   #${hex}   L ${luminance(src.data, i).toFixed(3)}`;
+    }
+
+    toolbar.hidden = false;
+    for (const b of buttons) b.addEventListener('click', () => void setMode(b.dataset.mode as Mode));
+    stage.addEventListener('pointerenter', () => void pixels());
+    stage.addEventListener('pointermove', (e) => void inspect(e));
+    stage.addEventListener('pointerdown', (e) => void inspect(e));
+    stage.addEventListener('pointerleave', () => {
+      root.style.removeProperty('--split');
+      probe.textContent = idleText;
+    });
+  }
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-render-inspector]')) enhance(root);
+</script>
+
+<style>
+  .inspector {
+    margin: 0;
+  }
+
+  .viewer {
+    --color-focus: var(--color-night-accent);
+    background: var(--color-night);
+    color: var(--color-night-muted);
+    font-family: var(--font-mono);
+    font-size: var(--text-annotation);
+  }
+
+  .titlebar {
+    display: flex;
+    align-items: center;
+    gap: 0.9em;
+    margin: 0;
+    padding: 0.55rem 0.9rem;
+    border-bottom: 1px solid var(--color-night-rule);
+  }
+
+  .dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--color-night-accent);
+  }
+
+  .dims {
+    margin-left: auto;
+  }
+
+  .stage {
+    position: relative;
+    cursor: crosshair;
+    touch-action: pan-y;
+  }
+
+  .stage :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* The debug view covers the image right of the split; the pointer moves the split. */
+  canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    clip-path: inset(0 0 0 var(--split, 50%));
+  }
+
+  .inspector:not([data-mode='beauty'])[data-mode] .stage::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--split, 50%);
+    width: 1px;
+    background: var(--color-paper);
+    pointer-events: none;
+  }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-4);
+    padding: 0.55rem 0.9rem;
+    border-top: 1px solid var(--color-night-rule);
+  }
+
+  .toolbar[hidden] {
+    display: none;
+  }
+
+  .modes {
+    display: flex;
+  }
+
+  .modes button {
+    padding: 0.3rem 0.7rem;
+    border: 1px solid var(--color-night-rule);
+    background: transparent;
+    color: var(--color-night-muted);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .modes button + button {
+    border-left: 0;
+  }
+
+  .modes button:hover {
+    color: var(--color-night-ink);
+  }
+
+  .modes button[aria-pressed='true'] {
+    background: var(--color-night-raised);
+    color: var(--color-night-ink);
+    box-shadow: inset 0 -2px 0 var(--color-night-accent);
+  }
+
+  .modes button:focus-visible {
+    outline-color: var(--color-night-accent);
+    outline-offset: -2px;
+  }
+
+  .probe {
+    color: var(--color-night-ink);
+    white-space: pre;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    flex: 1 1 18rem;
+  }
+
+  figcaption {
+    margin-top: var(--space-3);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+  }
+</style>

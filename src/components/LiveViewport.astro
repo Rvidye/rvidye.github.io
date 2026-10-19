@@ -1,0 +1,105 @@
+---
+/*
+ * A live, running demo from /lab/ in a debug-viewport frame. The iframe loads
+ * lazily (only when scrolled near), and the demo itself pauses off screen and
+ * respects reduced motion, so the page never pays for a canvas nobody sees.
+ */
+import { demoUrl, type Demo } from '../lib/content';
+
+interface Props {
+  demo: Demo;
+  /** Index shown in the frame's title bar, e.g. "exp.01". */
+  index: string;
+}
+
+const { demo, index } = Astro.props;
+const { data } = demo;
+---
+
+<article class="viewport">
+  <p class="bar" aria-hidden="true">
+    <span class="dot"></span>
+    <span>{index} · {demo.id}</span>
+    <span class="spec">{[...data.requires, 'live'].join(' · ')}</span>
+  </p>
+  <div class="screen">
+    <iframe src={`${data.url}?view`} title={`${data.title}, running live`} loading="lazy" tabindex="-1"></iframe>
+  </div>
+  <div class="caption">
+    <h3><a href={demoUrl(demo)}>{data.title}</a></h3>
+    <p>{data.description}</p>
+    <p class="hint">
+      Click or tap the image to pause it. <a href={demoUrl(demo)}>Edit the shader</a> · <a href={data.url}>Full screen</a>
+    </p>
+  </div>
+</article>
+
+<style>
+  .viewport {
+    border: 1px solid var(--color-night-rule);
+    background: var(--color-night-raised);
+  }
+
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: 0.9em;
+    margin: 0;
+    padding: 0.55rem 0.9rem;
+    border-bottom: 1px solid var(--color-night-rule);
+    color: var(--color-night-muted);
+    font-family: var(--font-mono);
+    font-size: var(--text-annotation);
+  }
+
+  .dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: #7fbf7a;
+  }
+
+  .spec {
+    margin-left: auto;
+  }
+
+  /* A faint debug grid shows while the demo loads, instead of an empty box. */
+  .screen {
+    aspect-ratio: 16 / 9;
+    background:
+      linear-gradient(var(--color-night-rule) 1px, transparent 1px) 0 0 / 2rem 2rem,
+      linear-gradient(90deg, var(--color-night-rule) 1px, transparent 1px) 0 0 / 2rem 2rem,
+      var(--color-night);
+  }
+
+  iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  .caption {
+    padding: var(--space-4) 0.9rem var(--space-4);
+    border-top: 1px solid var(--color-night-rule);
+  }
+
+  .caption > * {
+    margin: 0;
+  }
+
+  .caption > * + * {
+    margin-top: var(--space-2);
+  }
+
+  h3 {
+    font-size: var(--text-xl);
+    color: var(--color-night-ink);
+  }
+
+  .hint {
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    color: var(--color-night-muted);
+  }
+</style>

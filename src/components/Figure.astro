@@ -1,0 +1,26 @@
+---
+/*
+ * A captioned, responsive image for MDX articles:
+ *
+ *   import Figure from '../../components/Figure.astro';
+ *   import render from '../../assets/writing/my-post/render.png';
+ *
+ *   <Figure src={render} alt="What the image shows.">Caption, with *Markdown*.</Figure>
+ */
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  src: ImageMetadata;
+  alt: string;
+}
+
+const { src, alt } = Astro.props;
+// Never ask for a version wider than the original.
+const widths = [640, 960, 1280, 1920].filter((w) => w < src.width).concat(src.width);
+---
+
+<figure>
+  <Image src={src} alt={alt} widths={widths} sizes="(min-width: 56rem) 52rem, calc(100vw - 2rem)" />
+  {Astro.slots.has('default') && <figcaption><slot /></figcaption>}
+</figure>

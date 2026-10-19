@@ -1,0 +1,23 @@
+---
+import type { LinkItem } from '../lib/content';
+
+interface Props {
+  links: LinkItem[];
+  /** Accessible name for the list, e.g. "Links". */
+  label: string;
+}
+
+const { links, label } = Astro.props;
+---
+
+{
+  links.length > 0 && (
+    <ul class="inline-list meta" role="list" aria-label={label}>
+      {links.map((link) => (
+        <li>
+          {link.prefix && <>{link.prefix}{' '}</>}<a href={link.url}>{link.label}</a>
+        </li>
+      ))}
+    </ul>
+  )
+}

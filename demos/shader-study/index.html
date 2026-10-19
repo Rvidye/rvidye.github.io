@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Shader study · Rushikesh Vidye</title>
+    <meta name="description" content="An editable GLSL fragment shader, rendered with WebGL 2." />
+    <link rel="icon" href="data:," />
+    <script>
+      // Set the layout before first paint. ?embed: the demo page on the site (no header).
+      // ?view: just the canvas, filling the frame (the homepage viewport); click to pause.
+      const params = new URLSearchParams(location.search);
+      if (params.has('embed')) document.documentElement.classList.add('embed');
+      if (params.has('view')) document.documentElement.classList.add('embed', 'view');
+    </script>
+    <script type="module" src="./src/main.ts"></script>
+  </head>
+  <body>
+    <main class="demo">
+      <header class="intro">
+        <h1>Shader study</h1>
+        <p>
+          An editable fragment shader: change the GLSL below and the image recompiles as you type.
+          <a href="../../playground/shader-study/">About this demo</a>
+        </p>
+      </header>
+
+      <figure class="stage">
+        <canvas id="canvas" role="img" aria-label="The image produced by the fragment shader below."></canvas>
+        <p id="fallback" class="fallback" hidden></p>
+      </figure>
+
+      <div class="controls">
+        <button type="button" id="toggle">Pause</button>
+        <button type="button" id="reset">Reset shader</button>
+        <p id="status" class="status" role="status"></p>
+      </div>
+
+      <label for="source">
+        Fragment shader
+        <span class="hint">GLSL ES 3.00. <code>uResolution</code>, <code>uTime</code> and <code>fragColor</code> are already declared.</span>
+      </label>
+      <textarea id="source" spellcheck="false" autocapitalize="off" autocomplete="off" rows="20"></textarea>
+      <pre id="errors" class="errors" hidden></pre>
+
+      <noscript><p class="fallback">This demo needs JavaScript and WebGL 2.</p></noscript>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,147 @@
+---
+title: 'HairPT: Path-Traced Hair from Hair Meshes'
+description: Can we path trace millions of hair strands without storing the hairstyle as millions of strands? HairPT brings Cem Yuksel's Hair Meshes to hardware ray tracing, generating and styling hair on the GPU as Linear Swept Spheres. Built on NVIDIA's RTX Character Rendering sample, it runs at around 60 FPS on a laptop RTX 5060.
+kind: research
+status: ongoing
+featured: true
+order: 2
+startDate: '2026'
+tags: [real-time ray tracing, hair]
+technologies: [DirectX 12, HLSL, Linear Swept Spheres, DLSS Ray Reconstruction]
+related:
+  - label: NVIDIA RTX Character Rendering SDK
+    url: https://github.com/NVIDIA-RTX/RTXCR
+  - label: Hair Meshes
+    url: https://cemyuksel.com/research/hairmeshes/
+# Listing thumbnail and link-preview picture.
+heroImage:
+  src: ../../assets/work/hairpt/hero.png
+  alt: Path-traced wavy blonde hair on a pale bust, lit warm against a dark, blurred street.
+# Frames for the homepage showreel.
+gallery:
+  - src: ../../assets/work/hairpt/hero.png
+    alt: Path-traced wavy blonde hair on a pale bust against a dark street.
+    caption: Hair mesh, path traced
+  - src: ../../assets/work/hairpt/curls.jpg
+    alt: Long curly blonde hair lit by warm firelight.
+    caption: Curls
+  - src: ../../assets/work/hairpt/control-mesh-beside.jpg
+    alt: A cyan wireframe hair mesh next to the strand hair it generates.
+    caption: Hair mesh and strands
+  - src: ../../assets/work/hairpt/rim-light.jpg
+    alt: Blonde hair glowing with rim light, the face in shadow.
+    caption: Rim light
+  - src: ../../assets/work/hairpt/girlz-brown.jpg
+    alt: Straight brown hair in profile, lit orange by a fire.
+    caption: Firelight
+  - src: ../../assets/work/hairpt/winona.jpg
+    alt: Short dark hair with a fringe in warm light.
+    caption: Short hair
+---
+
+import Figure from '../../components/Figure.astro';
+import FigureGrid from '../../components/FigureGrid.astro';
+import Video from '../../components/Video.astro';
+import CompareSlider from '../../components/CompareSlider.astro';
+import hero from '../../assets/work/hairpt/hero.png';
+import meshBeside from '../../assets/work/hairpt/control-mesh-beside.jpg';
+import curls from '../../assets/work/hairpt/curls.jpg';
+import breezePoster from '../../assets/work/hairpt/breeze-poster.jpg';
+import compareCage from '../../assets/work/hairpt/compare-cage.jpg';
+import compareStrands from '../../assets/work/hairpt/compare-strands.jpg';
+import rimLight from '../../assets/work/hairpt/rim-light.jpg';
+import girlzBrown from '../../assets/work/hairpt/girlz-brown.jpg';
+import girlzDark from '../../assets/work/hairpt/girlz-dark.jpg';
+import winona from '../../assets/work/hairpt/winona.jpg';
+import july from '../../assets/work/hairpt/july.jpg';
+
+I've been interested in hair rendering for a while now. Before this, I implemented a rasterized hair renderer using mesh shaders, based on Cem Yuksel's [Real-Time Hair Rendering with Hair Meshes](https://www.cemyuksel.com/research/hairmesh_rendering) (SIGGRAPH 2024).
+
+The idea behind [Hair Meshes](https://cemyuksel.com/research/hairmeshes/) is pretty neat. Instead of storing or individually grooming thousands of hair strands, you model a relatively simple polygonal cage that describes the hairstyle. The actual strands are generated procedurally from this cage, along with styling parameters for curls, clumping, frizz, and so on.
+
+<Figure src={meshBeside} alt="A cyan wireframe hair mesh standing next to the blonde strand hair it generates.">
+  A hair mesh (cyan) beside the strands it generates.
+</Figure>
+
+This works particularly well with rasterization and mesh shaders, where you can generate geometry on the fly. But I was curious whether the same approach could work with **hardware ray tracing**, where all that geometry needs to exist inside an acceleration structure before you can trace rays against it.
+
+That's where HairPT started.
+
+<Figure src={hero} alt="Path-traced wavy blonde hair on a pale bust, lit warm against a dark, blurred street.">
+  Path traced in HairPT at 1024 samples per pixel.
+</Figure>
+
+## Getting it to work
+
+I started with NVIDIA's [RTX Character Rendering SDK](https://github.com/NVIDIA-RTX/RTXCR), which already has a DirectX 12 path tracer for hair using **Linear Swept Spheres (LSS)**, a hardware-accelerated primitive supported by NVIDIA's Blackwell GPUs.
+
+The original sample uses precomputed hair strands. I replaced that with a compute shader pipeline that generates strands directly from Hair Meshes on the GPU, including procedural styling and root placement.
+
+<Figure src={curls} alt="A bust with long curly blonde hair, lit by warm firelight against a dark room.">
+  The same hair mesh, restyled with curls.
+</Figure>
+
+I also added a simple breeze simulation that deforms the hair mesh, so the generated strands move along with it. The acceleration structures are refitted while the hair is changing and rebuilt once the geometry becomes static.
+
+<Video src="/media/hairpt/breeze.mp4" title="Path-traced hair in a simulated breeze" poster={breezePoster} width={1920} height={1080} loop>
+  Eight seconds of the breeze simulation in the real-time renderer: one sample per pixel, eight bounces, DLSS Ray Reconstruction.
+</Video>
+
+All of this works with RTXCR's existing path tracer, hair shading, and DLSS Ray Reconstruction.
+
+## How well does it work?
+
+Surprisingly well!
+
+One of the test hairstyles uses a hair mesh and styling parameters totaling around **140 KB**, which generate **60,000 strands with 64 segments each**: almost 4 million LSS segments. Storing those strands explicitly would take approximately 62 MB.
+
+<CompareSlider
+  before={{ src: compareCage, alt: 'The hair mesh drawn in cyan over the hair.', label: 'Hair mesh' }}
+  after={{ src: compareStrands, alt: 'The same view showing only the path-traced strands.', label: 'Strands' }}
+>
+  The hair mesh and the 60,000 strands it generates.
+</CompareSlider>
+
+On my laptop RTX 5060, it runs at around **60 FPS**, with moving hair, eight ray bounces, and DLSS Ray Reconstruction upscaling from 1080p to 1440p.
+
+The simulation, strand generation, and BVH updates together take only about **2–3 ms per frame**. Most of the time is spent tracing rays.
+
+Of course, this doesn't mean the entire renderer uses just 140 KB. The generated geometry and BVH still occupy a few hundred megabytes of GPU memory. The compact representation is great for modeling and storing hairstyles, but ray tracing still needs the expanded geometry.
+
+## Going down the optimization rabbit hole
+
+Once I had everything working, I started experimenting with different geometry representations and acceleration structures to see if I could make things faster.
+
+I tried Mega Geometry clusters with ribbon-based strands, hair cards with opacity micromaps, and even splitting the hairstyle into tetrahedral cages with separate BVHs.
+
+None of them managed to outperform a single BVH built over native LSS geometry.
+
+I also spent quite a bit of time benchmarking the renderer, which turned out to be a challenge of its own. GPU clocks on my laptop fluctuate enough to make small performance improvements difficult to trust, so I ended up building an experiment runner with interleaved A/B testing and GPU timing.
+
+One particularly counterintuitive result was that **using more segments per strand actually made ray tracing faster**. Going from 32 to 64 segments improved frame times by 21–31%, despite doubling the geometry. Shorter segments produced tighter bounding boxes, which made BVH traversal more efficient.
+
+I've also been experimenting with approximating multiple scattering through hair using a density field generated from the hair mesh. The density approximation works reasonably well, but getting the light transport right without losing or double-counting energy is still an open problem.
+
+<Figure src={rimLight} alt="Blonde hair glowing with rim light while the face stays in shadow.">
+  Backlit: the light comes from behind and to the side.
+</Figure>
+
+## What's next?
+
+I'd like to connect this with the Hair Mesh modeling and physics tools so that hairstyles can be edited, simulated, and path traced interactively, all within the same workflow.
+
+There's still plenty to explore, especially around BVH updates, geometry representation, and more efficient light transport through dense hair.
+
+For now, HairPT has been a fun excuse to experiment with just about every part of the real-time ray tracing pipeline.
+
+<FigureGrid
+  items={[
+    { src: girlzBrown, alt: 'Straight brown hair seen in profile, lit orange by a fire.', caption: 'Straight hair in firelight.' },
+    { src: girlzDark, alt: 'Long dark hair on a bust in front of white curtains.', caption: 'Long dark hair, studio light.' },
+    { src: winona, alt: 'Short dark hair with a fringe, lit warm against a dark background.', caption: 'Short hair with a fringe.' },
+    { src: july, alt: 'Straight light-brown hair over a bust with skin, eyes closed, against autumn trees.', caption: 'Light-brown hair outdoors.' },
+  ]}
+  caption="Other hair meshes, path traced with 640–1024 samples per pixel and 12 bounces."
+/>
+
+*Hair Mesh models and character assets are from Cem Yuksel's real-time hair rendering demo. HairPT extends NVIDIA's RTX Character Rendering SDK sample.*

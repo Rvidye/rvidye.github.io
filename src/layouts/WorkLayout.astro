@@ -1,0 +1,84 @@
+---
+/*
+ * A work entry's page: maps the entry onto the shared ProjectPage shell.
+ * Images belong in the MDX body, in the section of the story they illustrate;
+ * heroImage is the listing thumbnail and link-preview picture. A `video` in the
+ * frontmatter is shown as the lead.
+ */
+import ProjectPage from './ProjectPage.astro';
+import PostList from '../components/PostList.astro';
+import PublicationEntry from '../components/PublicationEntry.astro';
+import Video from '../components/Video.astro';
+import YouTube from '../components/YouTube.astro';
+import { KIND_LABEL, STATUS_LABEL, demoUrl, workLinks, type Demo, type Post, type Publication, type Work } from '../lib/content';
+
+interface Props {
+  entry: Work;
+  publications?: Publication[];
+  posts?: Post[];
+  demos?: Demo[];
+  preview?: boolean;
+}
+
+const { entry, publications = [], posts = [], demos = [], preview = false } = Astro.props;
+const { data } = entry;
+const start = data.startDate?.getUTCFullYear();
+const end = data.endDate?.getUTCFullYear();
+const years = start && end ? (start === end ? `${start}` : `${start}–${end}`) : start ? (data.status === 'ongoing' ? `${start}–present` : `${start}`) : undefined;
+const facts = [STATUS_LABEL[data.status], years, data.role].filter((f): f is string => Boolean(f));
+---
+
+<ProjectPage
+  title={data.title}
+  description={data.description}
+  kind={KIND_LABEL[data.kind]}
+  facts={facts}
+  links={workLinks(entry)}
+  recognition={data.recognition}
+  details={[
+    { label: 'Made with', items: data.technologies.map((t) => ({ label: t })) },
+    { label: 'Demos', items: demos.map((d) => ({ label: d.data.title, url: demoUrl(d) })) },
+  ]}
+  back={preview ? { label: 'Templates', href: '/dev/templates/' } : { label: 'Projects', href: '/projects/' }}
+  section="/projects/"
+  image={data.heroImage}
+  draft={data.draft}
+  preview={preview}
+>
+  {
+    data.video && (
+      <Fragment slot="lead">
+        {data.video.type === 'youtube' ? (
+          <YouTube id={data.video.id} title={data.video.title} poster={data.video.poster}>{data.video.caption}</YouTube>
+        ) : (
+          <Video src={data.video.src} title={data.video.title} poster={data.video.poster} width={data.video.width} height={data.video.height} type={data.video.mimeType} captions={data.video.captions}>{data.video.caption}</Video>
+        )}
+      </Fragment>
+    )
+  }
+
+  <slot />
+
+  <Fragment slot="after">
+    {
+      publications.length > 0 && (
+        <section class="detail-section" aria-labelledby="publications-heading">
+          <h2 id="publications-heading">Publications</h2>
+          {publications.map((publication) => <PublicationEntry entry={publication} />)}
+        </section>
+      )
+    }
+    {
+      posts.length > 0 && (
+        <section class="detail-section" aria-labelledby="blog-heading">
+          <h2 id="blog-heading">From the blog</h2>
+          <PostList items={posts} headingLevel={3} />
+        </section>
+      )
+    }
+  </Fragment>
+</ProjectPage>
+
+<style>
+  .detail-section > h2 { margin-top: 0; font-size: var(--text-lg); }
+</style>

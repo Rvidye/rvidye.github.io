@@ -1,0 +1,15 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostList from '../../components/PostList.astro';
+import { getPosts } from '../../lib/content';
+
+const posts = await getPosts();
+---
+
+<BaseLayout title="Blog" description="Technical writing, personal notes, and life updates by Rushikesh Vidye.">
+  <div class="page-intro">
+    <h1>Blog</h1>
+    <p class="lede">Technical notes, things I’m learning, and bits of life.</p>
+  </div>
+  {posts.length > 0 ? <PostList items={posts} /> : <p>No posts yet. This is where I’ll share notes as I go.</p>}
+</BaseLayout>

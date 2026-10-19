@@ -1,0 +1,20 @@
+---
+import { getCollection, render } from 'astro:content';
+import WorkLayout from '../../layouts/WorkLayout.astro';
+import { getRelatedPublications, getWorkBacklinks, isVisible, type Work } from '../../lib/content';
+
+export async function getStaticPaths() {
+  const work = await getCollection('work', isVisible);
+  return work.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+interface Props { entry: Work; }
+const { entry } = Astro.props;
+const [{ Content }, publications, { posts, demos }] = await Promise.all([
+  render(entry), getRelatedPublications(entry), getWorkBacklinks(entry),
+]);
+---
+
+<WorkLayout entry={entry} publications={publications} posts={posts} demos={demos}>
+  <Content />
+</WorkLayout>

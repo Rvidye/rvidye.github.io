@@ -1,0 +1,111 @@
+---
+/*
+ * An experiment presented like an object in a debugger's inspector panel:
+ * an index, a name, and key-value facts joined by dotted leaders.
+ * Designed for the dark workbench band.
+ */
+interface Props {
+  index: string;
+  title: string;
+  href: string;
+  /** Opens another site, so it gets a ↗ marker. */
+  external?: boolean;
+  description?: string;
+  facts: { key: string; value: string }[];
+  recognition?: { label: string; url?: string | undefined }[];
+}
+
+const { index, title, href, external = false, description, facts, recognition = [] } = Astro.props;
+---
+
+<article class="experiment">
+  <p class="index">{index}</p>
+  <h3>
+    <a href={href}>{title}{external && <span aria-hidden="true">{' '}↗</span>}</a>
+  </h3>
+  {description && <p class="description">{description}</p>}
+  <dl>
+    {
+      facts.map((fact) => (
+        <div>
+          <dt>{fact.key}</dt>
+          <dd>{fact.value}</dd>
+        </div>
+      ))
+    }
+  </dl>
+  {
+    recognition.length > 0 && (
+      <ul class="awards" role="list" aria-label="Recognition">
+        {recognition.map((r) => (
+          <li>{r.url ? <a href={r.url}>{r.label}</a> : r.label}</li>
+        ))}
+      </ul>
+    )
+  }
+</article>
+
+<style>
+  .experiment > * {
+    margin: 0;
+  }
+
+  .experiment > * + * {
+    margin-top: var(--space-2);
+  }
+
+  .index {
+    font-family: var(--font-mono);
+    font-size: var(--text-annotation);
+    color: var(--color-night-accent);
+  }
+
+  h3 {
+    font-size: var(--text-lg);
+    color: var(--color-night-ink);
+  }
+
+  .description {
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    color: var(--color-night-muted);
+  }
+
+  dl {
+    font-family: var(--font-mono);
+    font-size: var(--text-annotation);
+  }
+
+  /* key ........ value */
+  dl > div {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5em;
+  }
+
+  dl > div::after {
+    content: '';
+    order: 1;
+    flex: 1;
+    border-bottom: 1px dotted var(--color-night-rule);
+    transform: translateY(-0.25em);
+  }
+
+  dt {
+    color: var(--color-night-muted);
+  }
+
+  dd {
+    order: 2;
+    margin: 0;
+    color: var(--color-night-ink);
+    text-align: right;
+  }
+
+  .awards {
+    padding: 0;
+    list-style: none;
+    font-style: italic;
+    color: var(--color-night-ink);
+  }
+</style>

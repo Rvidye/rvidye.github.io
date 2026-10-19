@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 540" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">The simulated raster pipeline</title>
+  <desc id="d">Six stages from top to bottom: the GigaThread Engine, the PolyMorph Engines with their vertex shaders, the primitive crossbar, the Raster Engines, fragment shading with attribute setup, and the reorder buffers and ROPs. On the right, L2: vertex attributes are written to it by the PolyMorph Engines and read back by the Raster Engines and attribute setup; the ROPs read and write the render targets through it.</desc>
+  <defs>
+    <marker id="ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f2328"/></marker>
+    <marker id="acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3a5bd9"/></marker>
+    <style>
+      .box{fill:#ffffff;stroke:#1f2328;stroke-width:1.3}
+      .t{fill:#1f2328;font-size:15px;font-weight:600}
+      .s{fill:#5b616e;font-size:12.5px}
+      .n{fill:#5b616e;font-size:12px}
+      .ln{stroke:#1f2328;stroke-width:1.3;fill:none}
+      .acc{stroke:#3a5bd9;stroke-width:1.7;fill:none}
+      .at{fill:#3a5bd9;font-size:12px}
+    </style>
+  </defs>
+  <rect x="0" y="0" width="760" height="540" fill="#ffffff"/>
+
+  <!-- stages -->
+  <rect class="box" x="20" y="20" width="420" height="56" rx="4"/>
+  <text class="t" x="36" y="44">GigaThread Engine</text>
+  <text class="s" x="36" y="64">reads the draws and their indices, cuts them into batches</text>
+  <text class="n" x="428" y="44" text-anchor="end">chip</text>
+
+  <rect class="box" x="20" y="104" width="420" height="56" rx="4"/>
+  <text class="t" x="36" y="128">PolyMorph Engine + vertex shaders</text>
+  <text class="s" x="36" y="148">shades on its two SMs, then clips and culls</text>
+  <text class="n" x="428" y="128" text-anchor="end">23 TPCs</text>
+
+  <rect class="box" x="20" y="188" width="420" height="56" rx="4"/>
+  <text class="t" x="36" y="212">Primitive crossbar</text>
+  <text class="s" x="36" y="232">to every GPC whose screen tiles a triangle touches</text>
+  <text class="n" x="428" y="212" text-anchor="end">6 GPCs</text>
+
+  <rect class="box" x="20" y="272" width="420" height="56" rx="4"/>
+  <text class="t" x="36" y="296">Raster Engine: edge setup, rasterizer</text>
+  <text class="s" x="36" y="316">edge equations; coarse 16×16 tiles, fine 4×4 blocks</text>
+  <text class="n" x="428" y="296" text-anchor="end">6 GPCs</text>
+
+  <rect class="box" x="20" y="356" width="420" height="56" rx="4"/>
+  <text class="t" x="36" y="380">Fragment shaders + attribute setup</text>
+  <text class="s" x="36" y="400">attributes interpolated only when the shader asks</text>
+  <text class="n" x="428" y="380" text-anchor="end">46 SMs</text>
+
+  <rect class="box" x="20" y="440" width="420" height="56" rx="4"/>
+  <text class="t" x="36" y="464">Reorder buffer → ROP</text>
+  <text class="s" x="36" y="484">depth test and colour write, in submission order</text>
+  <text class="n" x="428" y="464" text-anchor="end">8 partitions</text>
+
+  <!-- links between stages -->
+  <line class="ln" x1="120" y1="76" x2="120" y2="102" marker-end="url(#ink)"/>
+  <text class="s" x="132" y="94">batch: vertex indices and triangles</text>
+  <line class="ln" x1="120" y1="160" x2="120" y2="186" marker-end="url(#ink)"/>
+  <text class="s" x="132" y="178">record: 3 pointers into L2 + bounding box</text>
+  <line class="ln" x1="120" y1="244" x2="120" y2="270" marker-end="url(#ink)"/>
+  <text class="s" x="132" y="262">back in API order, one triangle per clock</text>
+  <line class="ln" x1="120" y1="328" x2="120" y2="354" marker-end="url(#ink)"/>
+  <text class="s" x="132" y="346">fragments</text>
+  <line class="ln" x1="120" y1="412" x2="120" y2="438" marker-end="url(#ink)"/>
+  <text class="s" x="132" y="430">colour</text>
+
+  <!-- L2 -->
+  <rect x="580" y="20" width="160" height="476" rx="4" fill="#eef1fd" stroke="#3a5bd9" stroke-width="1.3"/>
+  <text x="660" y="50" text-anchor="middle" fill="#3a5bd9" font-size="17" font-weight="600">L2</text>
+  <text class="n" x="660" y="70" text-anchor="middle">8 × 512 KB</text>
+  <rect x="580" y="508" width="160" height="26" rx="3" fill="#ffffff" stroke="#1f2328" stroke-width="1.2"/>
+  <text class="s" x="660" y="525" text-anchor="middle">DRAM</text>
+  <line class="ln" x1="660" y1="496" x2="660" y2="507" />
+
+  <!-- memory traffic -->
+  <line class="acc" x1="578" y1="48" x2="442" y2="48" marker-end="url(#acc)"/>
+  <text class="at" x="510" y="40" text-anchor="middle">indices</text>
+  <line class="acc" x1="442" y1="132" x2="578" y2="132" marker-end="url(#acc)"/>
+  <text class="at" x="510" y="124" text-anchor="middle">vertex attributes</text>
+  <line class="acc" x1="578" y1="300" x2="442" y2="300" marker-end="url(#acc)"/>
+  <text class="at" x="510" y="292" text-anchor="middle">positions</text>
+  <line class="acc" x1="578" y1="384" x2="442" y2="384" marker-end="url(#acc)"/>
+  <text class="at" x="510" y="376" text-anchor="middle">attributes</text>
+  <line class="acc" x1="442" y1="468" x2="578" y2="468" marker-start="url(#acc)" marker-end="url(#acc)"/>
+  <text class="at" x="510" y="460" text-anchor="middle">render targets</text>
+</svg>

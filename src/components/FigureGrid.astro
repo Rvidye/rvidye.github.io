@@ -1,0 +1,83 @@
+---
+/*
+ * Two or three images side by side, each with its own caption: comparisons,
+ * or several frames from one project. Stacks on narrow screens.
+ *
+ *   <FigureGrid items={[
+ *     { src: before, alt: 'What it shows.', caption: 'Before: 7 hours.' },
+ *     { src: after, alt: 'What it shows.', caption: 'After: 35 minutes.' },
+ *   ]} />
+ */
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+
+interface Props {
+  items: { src: ImageMetadata; alt: string; caption?: string }[];
+  /** A caption for the whole group, below it. */
+  caption?: string;
+  /** Defaults to one row of up to three; four images make a 2 × 2 grid. */
+  columns?: 2 | 3;
+}
+
+const { items, caption } = Astro.props;
+const columns = Astro.props.columns ?? (items.length === 4 ? 2 : Math.min(items.length, 3));
+---
+
+<figure class="figure-grid" style={`--columns: ${columns}`}>
+  <div class="cells">
+    {
+      items.map((item) => (
+        <figure>
+          <Image
+            src={item.src}
+            alt={item.alt}
+            widths={[480, 800, 1200].filter((w) => w < item.src.width).concat(item.src.width)}
+            sizes={`(min-width: 56rem) ${Math.round(56 / columns)}rem, calc(100vw - 2rem)`}
+          />
+          {item.caption && <figcaption>{item.caption}</figcaption>}
+        </figure>
+      ))
+    }
+  </div>
+  {caption && <figcaption class="group-caption">{caption}</figcaption>}
+</figure>
+
+<style>
+  .figure-grid {
+    margin-block: var(--space-6);
+  }
+
+  /* Column gaps match the page grid, so three pictures start on its 1st,
+     5th and 9th columns, and two on its 1st and 7th. */
+  .cells {
+    display: grid;
+    gap: var(--space-4) var(--grid-gap);
+  }
+
+  .cells figure {
+    margin: 0;
+  }
+
+  .cells img {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: var(--color-paper-shade);
+  }
+
+  figcaption {
+    margin-top: var(--space-2);
+    color: var(--color-ink-muted);
+    font-size: var(--text-sm);
+  }
+
+  .group-caption {
+    margin-top: var(--space-3);
+  }
+
+  @media (min-width: 40rem) {
+    .cells {
+      grid-template-columns: repeat(var(--columns), minmax(0, 1fr));
+    }
+  }
+</style>

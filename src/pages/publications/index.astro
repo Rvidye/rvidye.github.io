@@ -1,0 +1,29 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PublicationEntry from '../../components/PublicationEntry.astro';
+import { getPublicationProjects, getPublications } from '../../lib/content';
+
+const [publications, projects] = await Promise.all([getPublications(), getPublicationProjects()]);
+---
+
+<BaseLayout title="Publications" description="Papers and posters by Rushikesh Vidye, with links to the PDFs and DOIs.">
+  <div class="page-intro">
+    <h1>Publications</h1>
+    <p class="lede">Papers and posters I’ve co-authored, newest first.</p>
+  </div>
+
+  {
+    publications.length > 0 ? (
+      <ol class="publication-list" role="list">
+        {publications.map((entry) => <li><PublicationEntry entry={entry} headingLevel={2} project={projects.get(entry.id)} /></li>)}
+      </ol>
+    ) : <p>Publications will appear here.</p>
+  }
+</BaseLayout>
+
+<style>
+  .page-intro { margin-bottom: 2.5rem; }
+  .publication-list { max-width: min(var(--text-span), 46rem); margin: 0; padding: 0; list-style: none; }
+  .publication-list li { padding-block: 1.75rem; border-top: 1px solid var(--color-rule); }
+  .publication-list li:first-child { padding-top: 0; border-top: 0; }
+</style>

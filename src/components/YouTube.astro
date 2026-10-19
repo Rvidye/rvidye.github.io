@@ -1,0 +1,107 @@
+---
+/*
+ * A YouTube video. With a `poster` (usually the video's own thumbnail), the
+ * page shows that picture and a Play button; YouTube's player loads only when
+ * the reader presses it, so nothing is requested from YouTube before then.
+ * Without JavaScript the button is a link to the video on YouTube.
+ */
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+
+interface Props {
+  /** A video ID or a full youtube.com/watch or youtu.be URL. */
+  id: string;
+  title: string;
+  /** A frame of the video, shown until the reader plays it. */
+  poster?: ImageMetadata;
+}
+
+const { id, title, poster } = Astro.props;
+let videoId = id;
+if (!/^[A-Za-z0-9_-]{11}$/.test(videoId)) {
+  let url: URL;
+  try {
+    url = new URL(id);
+  } catch {
+    throw new Error(`YouTube needs a video ID or a valid YouTube URL: ${id}`);
+  }
+  if (!['https:', 'http:'].includes(url.protocol)) throw new Error('YouTube URLs must use https or http.');
+  const host = url.hostname.toLowerCase();
+  if (host === 'youtu.be' || host === 'www.youtu.be') videoId = url.pathname.slice(1);
+  else if (['youtube.com', 'www.youtube.com', 'm.youtube.com'].includes(host) && url.pathname === '/watch') {
+    videoId = url.searchParams.get('v') ?? '';
+  } else throw new Error(`Unsupported YouTube URL: ${id}`);
+}
+if (!/^[A-Za-z0-9_-]{11}$/.test(videoId)) throw new Error(`Invalid YouTube video ID: ${videoId}`);
+if (!title.trim()) throw new Error('YouTube needs a descriptive title.');
+const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?rel=0`;
+const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+const widths = poster ? [640, 960, 1280].filter((w) => w < poster.width).concat(poster.width) : [];
+---
+
+<figure class="youtube">
+  {
+    poster ? (
+      <div class="stage" data-player={`${embedUrl}&autoplay=1`} data-title={title}>
+        <Image src={poster} alt="" widths={widths} sizes="(min-width: 58rem) 56rem, calc(100vw - 2rem)" />
+        <a class="play" href={watchUrl}><span aria-hidden="true">▶</span> Play<span class="visually-hidden">: {title}</span></a>
+      </div>
+    ) : (
+      <iframe
+        src={embedUrl}
+        title={title}
+        loading="lazy"
+        width="1920"
+        height="1080"
+        allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allowfullscreen
+      ></iframe>
+    )
+  }
+  {Astro.slots.has('default') && <figcaption><slot /></figcaption>}
+</figure>
+
+<script>
+  for (const stage of document.querySelectorAll<HTMLElement>('.youtube .stage[data-player]')) {
+    const play = stage.querySelector<HTMLAnchorElement>('.play');
+    if (!play) continue;
+    play.setAttribute('role', 'button');
+    play.addEventListener('click', (event) => {
+      event.preventDefault();
+      const frame = document.createElement('iframe');
+      frame.width = '1920';
+      frame.height = '1080';
+      frame.src = stage.dataset.player!;
+      frame.title = stage.dataset.title!;
+      frame.allow = 'accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share';
+      frame.referrerPolicy = 'strict-origin-when-cross-origin';
+      frame.allowFullscreen = true;
+      stage.replaceChildren(frame);
+      frame.focus();
+    });
+  }
+</script>
+
+<style>
+  .stage { position: relative; aspect-ratio: 16 / 9; background: var(--color-paper-shade); }
+  .stage :global(img) { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .youtube :global(iframe) { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border: 0; background: var(--color-paper-shade); }
+  .play {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+    padding: 0.55em 1.1em;
+    background: var(--color-chip);
+    color: var(--color-chip-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+  }
+  .play:hover { color: var(--color-chip-accent); }
+  .play span[aria-hidden] { margin-right: 0.35em; color: var(--color-chip-accent); }
+  figcaption { margin-top: var(--space-2); color: var(--color-ink-muted); font-size: var(--text-sm); }
+</style>

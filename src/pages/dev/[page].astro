@@ -1,0 +1,17 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Typography from '../../dev/typography.mdx';
+import '../../styles/prose.css';
+
+// Style-checking pages for local development. Production builds generate no
+// routes here, so nothing under /dev/ is ever published.
+export function getStaticPaths() {
+  return import.meta.env.DEV ? [{ params: { page: 'typography' } }] : [];
+}
+---
+
+<BaseLayout title="Typography specimen" noindex>
+  <article class="prose">
+    <Typography />
+  </article>
+</BaseLayout>

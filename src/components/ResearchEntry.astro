@@ -1,0 +1,161 @@
+---
+/*
+ * A research entry in the style of a paper listing: teaser figure, venue
+ * stamps, title, abstract-length description and links. "lead" puts the figure
+ * beside the text for the most important entry; "compact" stacks them.
+ */
+import LinkList from './LinkList.astro';
+import MediaFrame from './MediaFrame.astro';
+import { STATUS_LABEL, workLinks, workUrl, type Work } from '../lib/content';
+
+interface Props {
+  entry: Work;
+  variant?: 'lead' | 'compact';
+  /** Index shown in the margin, e.g. "R.1". */
+  index: string;
+}
+
+const { entry, variant = 'compact', index } = Astro.props;
+const { data } = entry;
+const sizes =
+  variant === 'lead'
+    ? '(min-width: 76rem) 41rem, (min-width: 56rem) 55vw, calc(100vw - 2rem)'
+    : '(min-width: 76rem) 34rem, (min-width: 48rem) 45vw, calc(100vw - 2rem)';
+---
+
+<article class:list={['research', variant]}>
+  <div class="figure">
+    <MediaFrame image={data.heroImage} slot={data.mediaSlot} aspect={variant === 'lead' ? '16 / 10' : '16 / 9'} sizes={sizes} />
+  </div>
+  <div class="text">
+    <p class="annotation">
+      <span class="index">{index}</span>
+      <span>{STATUS_LABEL[data.status]}</span>
+      {data.role && <span>{data.role}</span>}
+    </p>
+    {
+      data.recognition.length > 0 && (
+        <ul class="stamps" role="list" aria-label="Recognition">
+          {data.recognition.map((r) => (
+            <li>{r.url ? <a href={r.url}>{r.label}</a> : r.label}</li>
+          ))}
+        </ul>
+      )
+    }
+    <h3 class="title">
+      <a href={workUrl(entry)}>{data.title}</a>
+    </h3>
+    <p class="description">{data.description}</p>
+    {
+      data.technologies.length > 0 && (
+        <ul class="tech inline-list" role="list" aria-label="Technologies">
+          {data.technologies.map((t) => (
+            <li>{t}</li>
+          ))}
+        </ul>
+      )
+    }
+    <div class="links">
+      <LinkList links={[{ label: 'Project notes', url: workUrl(entry) }, ...workLinks(entry)]} label="Links" />
+    </div>
+  </div>
+</article>
+
+<style>
+  .research {
+    display: grid;
+    gap: var(--space-4);
+    align-content: start;
+  }
+
+  .text > * {
+    margin: 0;
+  }
+
+  .text > * + * {
+    margin-top: var(--space-2);
+  }
+
+  .annotation {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 0.9em;
+    font-family: var(--font-mono);
+    font-size: var(--text-annotation);
+    color: var(--color-ink-muted);
+  }
+
+  .index {
+    color: var(--color-accent);
+  }
+
+  /* Venue and award stamps: outlined, never filled, so they read as annotations. */
+  .stamps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding: 0;
+    list-style: none;
+  }
+
+  .stamps li {
+    padding: 0.2em 0.55em;
+    border: 1px solid var(--color-accent);
+    color: var(--color-accent);
+    font-family: var(--font-sans);
+    font-size: var(--text-xs);
+    line-height: 1.3;
+  }
+
+  .stamps a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .stamps a:hover {
+    text-decoration: underline;
+  }
+
+  .title {
+    font-size: var(--text-xl);
+    line-height: var(--leading-tight);
+  }
+
+  .lead .title {
+    font-size: var(--text-3xl);
+  }
+
+  .title a {
+    text-decoration-color: var(--color-rule);
+  }
+
+  .title a:hover {
+    text-decoration-color: var(--color-accent);
+  }
+
+  .description {
+    max-width: 60ch;
+  }
+
+  .lead .description {
+    font-size: var(--text-lg);
+  }
+
+  .tech {
+    font-family: var(--font-mono);
+    font-size: var(--text-annotation);
+    color: var(--color-ink-muted);
+  }
+
+  .links {
+    padding-top: var(--space-1);
+  }
+
+  @media (min-width: 56rem) {
+    .lead {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      gap: var(--grid-gap);
+      align-items: end;
+    }
+  }
+</style>

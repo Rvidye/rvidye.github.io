@@ -1,0 +1,64 @@
+---
+title: BVH-Lab
+description: My experimental framework for building, optimizing, and benchmarking Bounding Volume Hierarchies (BVHs). What started as a few experiments with tree rotations and directional traversal heuristics turned into a much larger project to explore BVH architectures on both CPUs and GPUs.
+kind: experiment
+status: ongoing
+order: 5
+startDate: '2026'
+tags: [ray tracing, acceleration structures]
+# Listing thumbnail and link-preview picture.
+heroImage:
+  src: ../../assets/work/bvh-lab/default-collapse.jpg
+  alt: A heat map of Sponza's atrium in purple, orange and yellow, brightest where rays test the most bounding boxes.
+---
+
+import Figure from '../../components/Figure.astro';
+import coherent from '../../assets/work/bvh-lab/coherent-rays.jpg';
+import incoherent from '../../assets/work/bvh-lab/incoherent-rays.jpg';
+
+Bounding Volume Hierarchies (BVHs) are pretty much the backbone of modern ray tracing. They let us traverse complex scenes efficiently without testing every ray against every primitive. Combine them with dedicated ray tracing hardware, and we get real-time ray tracing.
+
+Something this important naturally has decades of research behind it, with countless variations of BVH construction, traversal, compression, and optimization techniques. To make things more interesting, many implementation details used by NVIDIA, AMD, and other GPU manufacturers aren't publicly documented.
+
+Which is slightly frustrating when you're trying to do research in a Hardware Ray Tracing Group.
+
+## How it started
+
+During Summer 2026, I met with **Dr. Kopta** to explore whether his previous work on BVH tree rotations could be extended to modern wide BVH architectures.
+
+That eventually led me down a rabbit hole of experimenting with different BVH construction and optimization techniques. One idea was **direction-aware BVH collapsing**, where we try to optimize the hierarchy for particular ray directions.
+
+It showed promising results for primary rays but didn't generalize well to other ray distributions. After a few more experiments, I realized I was spending more time implementing infrastructure and benchmarking code than actually testing ideas.
+
+<Figure src={coherent} alt="Four heat maps of Sponza's atrium, labelled HW Sort, Default Collapse, Octant (CWBVH) and Directional, emptiest-first, with a colour scale of intersection tests per ray from 0 to 336.">
+  Intersection tests per ray with coherent rays, for four ways of building the wide BVH. Brighter means more tests.
+</Figure>
+
+<Figure src={incoherent} alt="Four heat maps of the same view, labelled HW Sort, Default Collapse, Octant (CWBVH) and Directional, fullest-first, with a colour scale from 91 to 181 intersection tests per ray.">
+  The same comparison with incoherent rays.
+</Figure>
+
+So I decided to build **BVH-Lab**.
+
+## What I'm building
+
+The idea is to have a common framework where I can quickly implement different BVH algorithms, compare them under identical conditions, and hopefully figure out why certain approaches work better than others.
+
+I'm developing CPU and GPU implementations to experiment with:
+
+- **Construction and updates:** different BVH builders, tree rotations, refitting, and rebuilding.
+- **Wide BVHs:** greedy and dynamic-programming-based collapsing, node merging, and reordering.
+- **Compression:** node and primitive compression techniques.
+- **Evaluation:** build times, update costs, memory consumption, traversal performance, and ray intersection statistics.
+
+I'm particularly interested in how these techniques behave across different scene geometries and ray distributions, rather than optimizing for one specific benchmark.
+
+## Where it stands
+
+BVH-Lab is still very much a work in progress. I don't expect every experiment to turn into a useful optimization, and a few have already demonstrated quite the opposite.
+
+But that's kind of the point.
+
+I'm hoping this becomes a useful research tool, not just for my own experiments but for anyone interested in exploring BVH architectures without having to build an entire testing framework first.
+
+I'll be documenting some of the more interesting experiments, including the ones that went terribly wrong, in a separate blog post: **How Not to Optimize a BVH**.

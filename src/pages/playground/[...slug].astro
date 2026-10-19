@@ -1,0 +1,12 @@
+---
+import { demoUrl, getDemos, type Demo } from '../../lib/content';
+
+export async function getStaticPaths() {
+  return (await getDemos()).filter((demo) => demo.id !== 'shader-study').map((demo) => ({
+    params: { slug: demo.id }, props: { demo },
+  }));
+}
+
+interface Props { demo: Demo; }
+return Astro.redirect(demoUrl(Astro.props.demo), 301);
+---

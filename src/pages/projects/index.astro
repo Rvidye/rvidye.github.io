@@ -1,0 +1,58 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import WorkList from '../../components/WorkList.astro';
+import PublicationEntry from '../../components/PublicationEntry.astro';
+import Showreel from '../../components/Showreel.astro';
+import { getPublicationProjects, getPublications, getWork } from '../../lib/content';
+import { getShowreelFrames } from '../../lib/showreel';
+import { frontmatter as intro } from '../../content/home/intro.md';
+
+const [projects, publications, frames, pubProjects] = await Promise.all([
+  getWork(), getPublications(), getShowreelFrames(intro.showreel ?? []), getPublicationProjects(),
+]);
+---
+
+<BaseLayout title="Projects" description="Research, personal projects, and experiments by Rushikesh Vidye.">
+  <div class="page-intro">
+    <h1>Projects</h1>
+    <p class="lede">Research, things I’ve built, and ideas I’m exploring.</p>
+  </div>
+
+  {/* Publications band, switched off: they have their own page.
+  {publications.length > 0 && (
+    <section class="publications" aria-labelledby="publications-heading">
+      <div class="section-head">
+        <h2 id="publications-heading">Publications</h2>
+        <a href="/publications/">All publications <span aria-hidden="true">↗</span></a>
+      </div>
+      <ol class="publication-list" role="list">
+        {publications.map((entry) => <li><PublicationEntry entry={entry} project={pubProjects.get(entry.id)} /></li>)}
+      </ol>
+    </section>
+  )} */}
+
+  {frames.length > 0 && (
+    <section class="project-showreel" aria-labelledby="pictures-heading">
+      <h2 id="pictures-heading">In pictures</h2>
+      <Showreel frames={frames} />
+    </section>
+  )}
+
+  {projects.length > 0 ? <WorkList items={projects} headingLevel={2} eagerFirstImage /> : <p>Projects will appear here.</p>}
+
+</BaseLayout>
+
+<style>
+  .page-intro { margin-bottom: 2rem; }
+  .page-intro h1 { margin-bottom: 0.6rem; }
+  .page-intro .lede { margin-bottom: 0; font-size: 1rem; }
+  .project-showreel { margin-bottom: 3.5rem; }
+  .project-showreel > h2 { margin: 0 0 1rem; font-size: 1.5rem; }
+  /* Publications sit near the top, on a shaded band, before the projects. */
+  .publications { margin-bottom: 3.5rem; padding: 1.75rem 2rem 2rem; background: var(--color-paper-shade); border-top: 2px solid var(--color-rust); }
+  .section-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0.5rem 1rem; margin-bottom: 1.5rem; }
+  .section-head h2 { margin: 0; font-size: 1.5rem; }
+  .section-head a { font-size: 0.8rem; }
+  .publication-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1.75rem 2.5rem; margin: 0; padding: 0; list-style: none; }
+  @media (max-width: 40rem) { .publications { padding: 1.5rem 1.1rem; margin-inline: -0.25rem; } }
+</style>

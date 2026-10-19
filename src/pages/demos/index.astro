@@ -1,0 +1,70 @@
+---
+import { Image } from 'astro:assets';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ShaderToy from '../../components/ShaderToy.astro';
+import { demoUrl, getDemos } from '../../lib/content';
+
+const demos = (await getDemos()).filter((demo) => demo.id !== 'shader-study');
+const mayasabha = demos.find((demo) => demo.id === 'mayasabha');
+const otherDemos = demos.filter((demo) => demo.id !== mayasabha?.id);
+---
+
+<BaseLayout title="Demos" description="Interactive graphics experiments by Rushikesh Vidye.">
+  <div class="page-intro">
+    <h1>Demos</h1>
+  </div>
+  {mayasabha && (
+    <article class="featured-demo" aria-labelledby="mayasabha-title">
+      <header class="featured-heading">
+        {mayasabha.data.draft && <p class="draft-marker meta">Draft</p>}
+        <h2 id="mayasabha-title">{mayasabha.data.title}</h2>
+        <p class="description">{mayasabha.data.description}</p>
+      </header>
+      <ShaderToy src={mayasabha.data.embedUrl ?? mayasabha.data.url} title={`${mayasabha.data.title}: interactive ShaderToy demo`} poster={mayasabha.data.thumbnail}>
+        <a href={demoUrl(mayasabha)}>About this demo</a>
+      </ShaderToy>
+    </article>
+  )}
+  {otherDemos.length > 0 && <ul class="demo-list" role="list">
+    {otherDemos.map((demo) => (
+      <li class="demo-entry grid">
+        {demo.data.thumbnail && <Image class="col-aside" src={demo.data.thumbnail.src} alt={demo.data.thumbnail.alt} widths={[640, 960]} sizes="(min-width: 70rem) 22rem, (min-width: 48rem) 32vw, calc(100vw - 2rem)" />}
+        <div class="col-text">
+        <p class="meta">
+          {demo.data.draft && <span class="draft-marker">Draft · </span>}
+          {demo.data.host ?? 'Browser demo'}
+        </p>
+        <h2><a href={demoUrl(demo)}>{demo.data.title}</a></h2>
+        <p class="description">{demo.data.description}</p>
+        <a class="open-demo" href={demoUrl(demo)}>Open demo <span aria-hidden="true">→</span></a>
+        </div>
+      </li>
+    ))}
+  </ul>}
+  {demos.length === 0 && <p>More demos will appear here.</p>}
+</BaseLayout>
+
+<style>
+  .page-intro { margin-bottom: 2.5rem; }
+  /* On the page grid: the heading on the text column, the player full width. */
+  .featured-heading { max-width: min(var(--text-span), var(--measure)); margin-bottom: 1.5rem; }
+  .featured-heading h2 { margin: 0 0 0.75rem; font-size: clamp(1.7rem, 3.5vw, 2.3rem); line-height: 1.15; letter-spacing: -0.035em; }
+  .featured-heading .description { margin-bottom: 0; }
+  .featured-demo :global(figure) { margin: 0; }
+  .featured-demo :global(figcaption) { font-size: 0.85rem; margin-top: 1rem; }
+  .demo-list { list-style: none; margin: 3.5rem 0 0; padding: 0; }
+  .demo-entry { align-items: start; padding-block: 2rem; border-bottom: 1px solid var(--color-rule); }
+  @media (min-width: 48rem) { .demo-entry > * { grid-row: 1; } .demo-entry img { margin-bottom: 0; } }
+  .demo-entry:first-child { padding-top: 0; }
+  .demo-entry:last-child { border-bottom: 0; }
+  img { width: 100%; margin-bottom: 1.25rem; }
+  .meta { margin: 0 0 0.5rem; font-size: 0.75rem; }
+  h2 { margin: 0 0 0.75rem; font-size: 1.65rem; letter-spacing: -0.025em; }
+  h2 a { text-decoration: none; }
+  .description { font-size: 0.95rem; line-height: 1.65; }
+  .open-demo { font-size: 0.85rem; }
+  @media (max-width: 40rem) {
+    .page-intro { margin-bottom: 2rem; }
+    .featured-heading { margin-bottom: 1.25rem; }
+  }
+</style>

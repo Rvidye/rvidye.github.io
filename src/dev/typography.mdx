@@ -1,0 +1,75 @@
+import Figure from '../components/Figure.astro';
+import Video from '../components/Video.astro';
+import render from '../assets/work/foxrt/trc-2025-render.jpg';
+
+# Typography specimen
+
+This page exists only in development. It shows every element an article can use, so style changes can be checked in one place. Body text is set in Libertinus Serif, with figures such as 1, 2, 3 and 2026. Here is *emphasis*, **strong text**, a [link to the home page](/), inline `code`, and a keyboard shortcut <kbd>Ctrl</kbd> + <kbd>K</kbd>.
+
+A second paragraph, to check spacing between paragraphs and how a longer line of running text wraps at the reading measure. Long technical words such as acceleration-structure traversal should hyphenate where the browser allows.
+
+## A second-level heading
+
+Unordered list:
+
+- First item, short.
+- Second item, long enough to wrap onto a second line so the hanging indent and the marker colour can be checked.
+- Third item with `inline code`.
+
+Ordered list:
+
+1. Trace a ray from the camera.
+2. Find the nearest intersection.
+3. Accumulate the contribution.
+
+### A third-level heading
+
+> A blockquote, set in italic and indented with a rule, for quoting a paper or another writer.
+
+#### A fourth-level heading
+
+A paragraph with a footnote reference.[^1]
+
+## Code
+
+```cpp
+// Balance heuristic weight for multiple importance sampling.
+float misWeight(float pdfA, float pdfB) {
+    const float sum = pdfA + pdfB;
+    return sum > 0.0f ? pdfA / sum : 0.0f;
+}
+```
+
+```hlsl
+float4 main(float2 uv : TEXCOORD0) : SV_Target {
+    return float4(uv, 0.5, 1.0); // "debug" colour
+}
+```
+
+## Figure
+
+<Figure src={render} alt="A Utah teapot made of billowing white cloud, floating against a pale blue sky.">
+  A figure caption, set small in the sans-serif face, with a [link](/).
+</Figure>
+
+## Video
+
+The poster and controls only: there is no video file at this path, and nothing downloads unless Play is pressed.
+
+<Video src="/media/example.mp4" poster={render} width={1280} height={720} label="Example video slot using the FoxRT render as its poster.">
+  A video caption.
+</Video>
+
+## Table
+
+| Typeface          | Role                      | Weights loaded |
+| ----------------- | ------------------------- | -------------- |
+| Libertinus Serif  | Headings and body text    | 400, 400 italic, 600 |
+| Libertinus Sans   | Navigation and metadata   | 400, 700       |
+| Libertinus Mono   | Code                      | 400            |
+
+---
+
+The rule above is a thematic break.
+
+[^1]: The footnote text, set smaller below a rule at the end of the article.

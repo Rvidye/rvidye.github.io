@@ -1,0 +1,115 @@
+---
+title: Arches Rasterizer
+description: Ever wondered what actually happens inside a GPU when it rasterizes a triangle? I'm building a Turing-inspired rasterization pipeline inside Arches, the University of Utah's cycle-level GPU simulator, to study graphics hardware and compare rasterization with ray tracing on the same simulated chip.
+kind: research
+status: ongoing
+featured: true
+order: 3
+startDate: '2026'
+tags: [GPU architecture, simulation, rasterization]
+technologies: [C++, RISC-V]
+links:
+  code: https://github.com/Rvidye/arches/tree/rasterizer
+related:
+  - label: Arches simulator
+    url: https://github.com/Utah-Graphics-Lab/arches
+# Listing thumbnail and link-preview picture.
+heroImage:
+  src: ../../assets/work/arches-rasterizer/sponza-raster.png
+  alt: Sponza's atrium with red, blue and green banners, rasterized on the simulated chip.
+# Frames for the homepage showreel.
+gallery:
+  - src: ../../assets/work/arches-rasterizer/sponza-raster.png
+    alt: Sponza's atrium with red, blue and green banners, rasterized on the simulated chip.
+    caption: Sponza, rasterized on a simulated GPU
+  - src: ../../assets/work/arches-rasterizer/sibenik-depth.png
+    alt: Grey depth image of a cathedral nave with rows of columns.
+    caption: Šibenik, depth buffer
+---
+
+import FigureGrid from '../../components/FigureGrid.astro';
+import CompareSlider from '../../components/CompareSlider.astro';
+import compareTrax from '../../assets/work/arches-rasterizer/compare-trax.jpg';
+import compareRaster from '../../assets/work/arches-rasterizer/compare-raster.jpg';
+import cornellDepth from '../../assets/work/arches-rasterizer/cornell-box-depth.png';
+import sibenikDepth from '../../assets/work/arches-rasterizer/sibenik-depth.png';
+import sponzaDepth from '../../assets/work/arches-rasterizer/sponza-depth.png';
+
+[Arches](https://github.com/Utah-Graphics-Lab/arches) is a cycle-level GPU simulator developed at the University of Utah's Hardware Ray Tracing Lab. It models GPU components such as streaming multiprocessors, caches, memory controllers, and dedicated ray tracing hardware. It also runs **TRaX**, a ray tracer that executes on the simulated hardware.
+
+One thing Arches was missing, however, was a traditional graphics pipeline. We could simulate ray tracing, but we couldn't compare it against rasterization on the same simulated GPU.
+
+That's where my project comes in.
+
+## Building a GPU inside a GPU simulator
+
+My goal is to implement a rasterization pipeline inspired by **NVIDIA's Turing architecture**, using publicly available documentation, whitepapers, and microbenchmarking studies.
+
+Unlike a software rasterizer, where the main concern is producing the correct image, here I'm interested in modeling the hardware itself: how work moves between the graphics units, how shaders are scheduled, where data gets cached, and how many cycles each operation takes.
+
+I've implemented models of the GigaThread Engine, PolyMorph Engines, Raster Engines, and Raster Operations (ROPs), connected through Arches' existing memory hierarchy.
+
+<figure>
+  <img src="/media/arches-rasterizer/pipeline.svg" width="760" height="540" loading="lazy" decoding="async" alt="Diagram: six pipeline stages from the GigaThread Engine to the ROPs, with vertex attributes, positions and render targets moving through L2 beside them." />
+  <figcaption>The simulated pipeline. The PolyMorph Engines write vertex attributes to L2; the Raster Engines and attribute setup read them back, and the ROPs read and write the render targets through it.</figcaption>
+</figure>
+
+Vertex and fragment shaders execute as **RISC-V threads** on the simulated streaming multiprocessors, while dedicated fixed-function units handle clipping, triangle setup, rasterization, depth testing, and other graphics operations.
+
+One interesting challenge is preserving the correct ordering of graphics operations while letting different parts of the pipeline execute in parallel. Another is moving geometry through the memory hierarchy without introducing unnecessary bottlenecks.
+
+## Does it actually render anything?
+
+Yes! And getting the correct image was the first major milestone.
+
+I implemented a CPU reference rasterizer alongside the hardware simulator, using shared rasterization math to ensure consistent results. The simulated pipeline now produces **bit-exact color and depth buffers** compared to the reference implementation.
+
+I've tested it with scenes including the Cornell Box, Šibenik Cathedral, and Sponza.
+
+<FigureGrid
+  items={[
+    { src: cornellDepth, alt: 'Grey depth image of a box-shaped room with two spheres on the floor.', caption: 'Cornell Box.' },
+    { src: sibenikDepth, alt: 'Grey depth image of a cathedral nave: rows of columns and arches receding into the dark.', caption: 'Šibenik Cathedral.' },
+    { src: sponzaDepth, alt: "Grey depth image of Sponza's atrium: arches and banners fade darker with distance.", caption: 'Sponza.' },
+  ]}
+  caption="Depth buffers from the simulated pipeline (log scale, near is bright), each bit-exact with the reference rasterizer."
+/>
+
+Since Arches already supports ray tracing through TRaX, I can also render the same scene using rasterization and ray tracing on the same simulated hardware.
+
+<CompareSlider
+  before={{ src: compareTrax, alt: "Sponza's atrium ray traced on the simulated chip.", label: 'Ray traced (TRaX)' }}
+  after={{ src: compareRaster, alt: 'The same view of Sponza, rasterized.', label: 'Rasterized' }}
+>
+  The same scene, ray traced and rasterized on the same simulated chip. Shading is unlit: textured albedo only.
+</CompareSlider>
+
+## Some interesting results
+
+With a functional pipeline, I started investigating its performance. All the following measurements use the simulated RTX 2080 configuration at 1024 × 1024.
+
+| Scene | Rasterization | Ray tracing (TRaX) |
+| --- | ---: | ---: |
+| Cornell Box | 66,652 cycles | 380,762 cycles |
+| Šibenik | 243,684 cycles | 401,367 cycles |
+| Sponza | 1,551,091 cycles | 509,956 cycles |
+
+The rasterizer is faster on the Cornell Box and Šibenik, but **roughly 3× slower than ray tracing on Sponza**.
+
+The main reason is that my current pipeline doesn't support early depth rejection, so it ends up shading almost 7 million fragments for a one-million-pixel image. Features like early-Z, hierarchical Z-culling, and mipmapping become pretty important here.
+
+Another interesting finding came from investigating triangle throughput. At first, I suspected the rasterization units or internal queues were limiting performance. It turns out the actual bottleneck was **L2 cache throughput**.
+
+The rasterizer could theoretically process six triangles per clock, but the memory requests generated by each triangle limited the measured throughput to approximately 2.27 triangles per clock in a synthetic test.
+
+I also ran into some rather unintuitive performance problems involving memory partition interleaving, shader constant loads, and fragment ordering. These are exactly the kinds of architectural details I wanted to investigate with this project.
+
+## Where it stands
+
+The rasterizer is functional, produces correct images, and supports architectural experiments, but there's still a lot to do.
+
+The current model is **cycle-level, not yet validated as cycle-accurate against real GPU hardware**. Some hardware parameters aren't publicly documented, so they need to be approximated, evaluated experimentally, and eventually calibrated against real hardware measurements.
+
+We're hoping to develop this into a more complete research framework for studying graphics pipeline architectures. There aren't many openly available, detailed GPU rasterization simulators, and having one alongside Arches' existing ray tracing hardware could be useful for exploring future GPU designs.
+
+For now, I'm working on improving the hardware models, investigating performance bottlenecks, and adding missing graphics pipeline features.

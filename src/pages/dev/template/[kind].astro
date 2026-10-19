@@ -1,0 +1,38 @@
+---
+import WorkLayout from '../../../layouts/WorkLayout.astro';
+import ArticleLayout from '../../../layouts/ArticleLayout.astro';
+import PersonalProject, { frontmatter as personalProject } from '../../../../templates/personal-project.mdx';
+import ResearchProject, { frontmatter as researchProject } from '../../../../templates/research-project.mdx';
+import BlogPost, { frontmatter as blogPost } from '../../../../templates/blog-post.mdx';
+import TechnicalPost, { frontmatter as technicalPost } from '../../../../templates/technical-post.mdx';
+import PersonalNote, { frontmatter as personalNote } from '../../../../templates/personal-note.mdx';
+import type { Work, Post } from '../../../lib/content';
+
+export function getStaticPaths() {
+  return import.meta.env.DEV
+    ? ['research', 'personal-project', 'blog', 'technical', 'personal'].map((kind) => ({ params: { kind } }))
+    : [];
+}
+
+const specimens = {
+  research: { Content: ResearchProject, frontmatter: researchProject, category: 'work' },
+  'personal-project': { Content: PersonalProject, frontmatter: personalProject, category: 'work' },
+  blog: { Content: BlogPost, frontmatter: blogPost, category: 'writing' },
+  technical: { Content: TechnicalPost, frontmatter: technicalPost, category: 'writing' },
+  personal: { Content: PersonalNote, frontmatter: personalNote, category: 'writing' },
+};
+const kind = Astro.params.kind as keyof typeof specimens;
+const { Content, frontmatter, category } = specimens[kind];
+const entry: Work = {
+  id: `template-${kind}`, collection: 'work',
+  data: { title: frontmatter.title, description: frontmatter.description, kind: frontmatter.kind, status: frontmatter.status, draft: true, featured: false, order: 100, tags: [], technologies: [], links: {}, related: [], recognition: [], relatedPublications: [], gallery: [], ...frontmatter },
+};
+const post: Post = {
+  id: `template-${kind}`, collection: 'writing',
+  data: { title: frontmatter.title, description: frontmatter.description, kind: frontmatter.kind, draft: true, tags: [], relatedWork: [], ...frontmatter },
+};
+---
+
+{category === 'work'
+  ? <WorkLayout entry={entry} preview><Content /></WorkLayout>
+  : <ArticleLayout post={post} preview><Content /></ArticleLayout>}

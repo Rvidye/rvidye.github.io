@@ -1,0 +1,70 @@
+---
+title: 'Patchwork: Micropolygon Modeling'
+description: A micropolygon modeling framework that combines polygonal and parametric modeling through editable meta-patches and meta-edges. Presented at SIGGRAPH 2026; I'm now building its Blender integration as my master's project at the University of Utah.
+kind: research
+status: ongoing
+role: MS project
+featured: true
+order: 1
+startDate: '2026'
+tags: [geometry processing, modeling]
+technologies: [C++, Python, Blender]
+links:
+  poster: https://www.cemyuksel.com/research/papers/MicropolygonModeling-SIGGRAPH2026-Poster.pdf
+recognition:
+  - label: SIGGRAPH 2026 poster and live demo
+    url: https://doi.org/10.1145/3799825.3818772
+    year: 2026
+    badge: SIGGRAPH 2026 poster
+relatedPublications: [siggraph-2026-patchwork-poster]
+# Listing thumbnail and link-preview picture.
+heroImage:
+  src: ../../assets/work/patchwork/bezier-teapot-cage.jpg
+  alt: A glossy red Utah teapot wrapped in a white control cage of Bézier meta-patches.
+# Frames for the homepage showreel.
+gallery:
+  - src: ../../assets/work/patchwork/bezier-teapot-cage.jpg
+    alt: A glossy red Utah teapot wrapped in a white control cage of Bézier meta-patches.
+    caption: Bézier meta-patches
+  - src: ../../assets/work/patchwork/blender-add-on-detail.jpg
+    alt: A grey twisted, screw-like shape topped by a cylinder, selected in Blender's viewport.
+    caption: The Blender add-on
+  - src: ../../assets/work/patchwork/standalone-demo-poster.jpg
+    alt: A lavender shape with a twisted tube and a highlighted yellow meta-face, on a dark background.
+    caption: The standalone modeler
+---
+
+import Figure from '../../components/Figure.astro';
+import Video from '../../components/Video.astro';
+import standalonePoster from '../../assets/work/patchwork/standalone-demo-poster.jpg';
+import bezierPoster from '../../assets/work/patchwork/bezier-teapot-poster.jpg';
+import blenderPoster from '../../assets/work/patchwork/blender-add-on-poster.jpg';
+import metaTeapots from '../../assets/work/patchwork/meta-teapots.png';
+
+Patchwork explores a different approach to polygonal modeling, where you work with high-level **meta-patches, meta-edges, and meta-vertices** instead of directly manipulating the underlying mesh.
+
+<Video src="/media/patchwork/standalone-demo.mp4" title="Modeling with meta-patches in the standalone Patchwork application" poster={standalonePoster} width={1920} height={1008} loop>
+  The original standalone application: extruding, carving, and rotating meta-vertices and meta-faces.
+</Video>
+
+One of our more interesting features is the ability to convert any selected meta-patch into a **generalized Bézier patch**, so you can switch between polygonal and parametric modeling within the same model. Similarly, meta-edges can be represented and manipulated as Bézier curves. This gives much more flexibility when modeling smooth surfaces and controlling their boundaries.
+
+<Video src="/media/patchwork/bezier-teapot.mp4" title="Editing the Utah teapot through its Bézier meta-patches" poster={bezierPoster} width={1024} height={1024} loop>
+  The teapot as generalized Bézier patches, reshaped through their control points.
+</Video>
+
+<Figure src={metaTeapots} alt="Three glossy red Utah teapots with slightly different proportions, reflecting trees, in a Blender viewport.">
+  Meta-patch teapots.
+</Figure>
+
+## My contribution
+
+I first worked on the original standalone application, implementing interactive modeling tools including **Mirror Editor, Carve, and Extrude**. We presented the framework at **SIGGRAPH 2026**, where I also demonstrated the modeling workflow live.
+
+For my master's project, I'm now reimplementing the framework as a **Blender add-on**, with a C++ geometry-processing backend and a Python UI and interactions. This involves building a custom half-edge mesh representation, implementing the geometry-processing and weighting algorithms, and integrating the modeling tools into Blender.
+
+<Video src="/media/patchwork/blender-add-on.mp4" title="The Patchwork Blender add-on, turning a cube into a twisted shape" poster={blenderPoster} width={1920} height={1146} loop>
+  Work in progress: the Blender add-on, from a cube to a twisted shape.
+</Video>
+
+The goal is to make these modeling techniques accessible within Blender while continuing to experiment with new modeling interactions.

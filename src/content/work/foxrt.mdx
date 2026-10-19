@@ -1,0 +1,144 @@
+---
+title: FoxRT
+description: My spectral volumetric path tracer, built for CS 6620 at the University of Utah. Inspired by Physically Based Rendering, designed around AVX-512 SIMD, and driven from a Houdini add-on.
+kind: project
+status: completed
+featured: true
+order: 4
+startDate: '2025-12'
+endDate: '2026-02'
+tags: [rendering, path tracing, volumes, spectral]
+technologies: [C++, AVX-512, OpenVDB, NanoVDB, Houdini, ParaView]
+links:
+  video: https://www.youtube.com/watch?v=JM8tJEWO3Kw
+related:
+  - label: My CS 6620 project log
+    url: https://graphics.cs.utah.edu/courses/cs6620/fall2025/?prj=15&u=u1591868
+  - label: 'CS 6620: Rendering with Ray Tracing'
+    url: https://graphics.cs.utah.edu/courses/cs6620/fall2025/
+  - label: Physically Based Rendering (4th ed.)
+    url: https://pbr-book.org/
+recognition:
+  - label: Juror Choice Award, Teapot Rendering Competition 2025
+    url: https://graphics.cs.utah.edu/trc/?year=2025
+    year: 2025
+    badge: TRC 2025 Juror Choice
+# Listing thumbnail and link-preview picture. Pictures in the story are placed in the body below.
+heroImage:
+  src: ../../assets/work/foxrt/nested-teapot.png
+  alt: A glass Utah teapot with a LEGO room inside. A minifigure sits on a blue sofa beside a small red LEGO teapot, and the glass refracts the toys behind it.
+# Frames for the homepage showreel.
+gallery:
+  - src: ../../assets/work/foxrt/nested-teapot.png
+    alt: A glass Utah teapot with a LEGO room inside, refracting the toys around it.
+    caption: Nested Teapot
+  - src: ../../assets/work/foxrt/nested-teapot-minifig.png
+    alt: A LEGO minifigure on a blue sofa, behind a red LEGO teapot marked with a U.
+    caption: Nested Teapot, close-up
+  - src: ../../assets/work/foxrt/nested-teapot-wide.png
+    alt: The glass teapot on a sunlit desk under a red lamp, with a window behind it.
+    caption: Nested Teapot, wide shot
+  - src: ../../assets/work/foxrt/trc-2025-render.jpg
+    alt: A Utah teapot made of billowing white cloud against a pale blue sky.
+    caption: Cloud teapot
+  - src: ../../assets/work/foxrt/nested-teapot-room.png
+    alt: A LEGO living room seen through the curved glass of the teapot.
+    caption: Inside the glass teapot
+---
+
+import CompareSlider from '../../components/CompareSlider.astro';
+import Figure from '../../components/Figure.astro';
+import Video from '../../components/Video.astro';
+import YouTube from '../../components/YouTube.astro';
+import cloud7h from '../../assets/work/foxrt/cloud-teapot-7h.png';
+import cloud35m from '../../assets/work/foxrt/trc-2025-render.jpg';
+import nestedTeapot from '../../assets/work/foxrt/nested-teapot.png';
+import firstFrame from '../../assets/work/foxrt/nested-teapot-first-frame.png';
+
+FoxRT is a spectral volumetric path tracer. The name is a play on FoxEngine, my real-time rendering engine.
+
+In Fall 2025 I started my master's at the University of Utah with [CS 6620: Rendering with Ray Tracing](https://graphics.cs.utah.edu/courses/cs6620/fall2025/), which is, in my opinion, one of the best courses on the subject.
+
+I'd experimented with ray tracing before, through Peter Shirley's [*Ray Tracing in One Weekend*](https://raytracing.github.io/) series, and had tried to work through [*Physically Based Rendering: From Theory to Implementation*](https://pbr-book.org/) (PBRT), but its sheer scope always made it hard to follow. The course finally gave me the foundation to work through the book properly.
+
+I'd been interested in volumetric light transport for a long time (my [OpenVDB volume path tracer](/work/openvdb-volume-tracer/) is from 2022), so for my final project I decided to study PBRT's [volumetric path integrator](https://pbr-book.org/4ed/Light_Transport_II_Volume_Rendering/Volume_Scattering_Integrators).
+
+## The first attempt
+
+My first implementation extended the course framework to load VDB volumes and path trace them by brute force: fixed-step ray marching with a cubic reconstruction filter.
+
+For the first round of the [Teapot Rendering Competition](https://graphics.cs.utah.edu/trc/?year=2025), I rendered a cloud shaped like the Utah teapot, using a volume from [pbrt-v4-volumes](https://github.com/shadeops/pbrt-v4-volumes).
+
+<Figure src={cloud7h} alt="A Utah teapot made of billowing white cloud against a pale blue sky.">
+  The first cloud teapot.
+</Figure>
+
+The result looked pretty cool. It also took **7 hours** to render a single image with one volume and HDRI lighting: 1280 × 720 at 2048 samples per pixel, with a Halton sampler, a Gaussian pixel filter of radius 2.5, and paths up to 50 bounces deep ([project page](https://graphics.cs.utah.edu/courses/cs6620/fall2025/?prj=14&u=u1591868)).
+
+Clearly, there was room for improvement.
+
+## Starting over
+
+The original renderer had two big problems.
+
+**Scene creation was painful.** Throughout the course we described scenes in XML files. That was fine for assignments, but increasingly frustrating for complex scenes, and for animating anything at all.
+
+**Performance was terrible.** Some questionable architectural decisions I'd made early on had caught up with me: my multithreaded renderer was somehow slower than the single-threaded one.
+
+So rather than keep patching things together, I wrote FoxRT from scratch. This time I followed my notes from PBRT more closely, designed the renderer around spectral sampling, and structured the computation with SIMD and AVX-512 in mind. I also replaced fixed-step volume marching with [delta tracking](https://pbr-book.org/4ed/Light_Transport_II_Volume_Rendering/The_Equation_of_Transfer), which made volumetric rendering far more efficient.
+
+To fix scene creation, I wrote a [Houdini](https://www.sidefx.com/products/houdini/) integration, so I could build, modify and animate scenes without editing XML by hand.
+
+## The results
+
+For the final competition submission I made **Nested Teapot**: a LEGO teapot inside a glass teapot, with wavelength-dependent dispersion in the glass.
+
+<Figure src={nestedTeapot} alt="A glass Utah teapot with a LEGO room inside. A minifigure sits on a blue sofa beside a small red LEGO teapot, and the glass refracts the toys behind it.">
+  Nested Teapot, rendered with FoxRT.
+</Figure>
+
+With the new renderer and the Houdini workflow, all 120 frames of the animation rendered in about 5 hours, at 1280 × 720 and 1024 samples per pixel ([project page](https://graphics.cs.utah.edu/courses/cs6620/fall2025/?prj=15&u=u1591868)).
+
+<Video
+  src="/media/foxrt/nested-teapot.mp4"
+  poster={firstFrame}
+  width={1280}
+  height={720}
+  loop
+  title="Nested Teapot animation: the camera pulls back from a red LEGO teapot marked with a U to reveal a LEGO room inside a glass Utah teapot."
+>
+  Nested Teapot, all 120 frames.
+</Video>
+
+I also went back to the original cloud teapot. At the same resolution and sample count, the scene that had taken 7 hours rendered in **35 minutes**: a 12× speedup.
+
+<CompareSlider
+  before={{ src: cloud7h, alt: 'The cloud teapot rendered by the first renderer.', label: 'First attempt · 7 hours' }}
+  after={{ src: cloud35m, alt: 'The same cloud teapot rendered by FoxRT.', label: 'FoxRT · 35 minutes' }}
+>
+  The same scene, before and after. Drag across the image to compare.
+</CompareSlider>
+
+FoxRT received the [Juror's Choice Award](https://graphics.cs.utah.edu/trc/?year=2025) at the 2025 Utah Teapot Rendering Competition finals.
+
+## From teapots to scientific visualization
+
+The following semester I took [CS 6635: Visualization for Scientific Data](https://my.eng.utah.edu/~cs6635/), and FoxRT found another use. For our final project I extended FoxRT and its Houdini add-on to work with scientific datasets from [ParaView](https://www.paraview.org/). The idea was to bring the data into Houdini, set up a scene there, and let FoxRT's physically based rendering make it look good.
+
+The workflow was fairly straightforward: **ParaView → Houdini → FoxRT**.
+
+<YouTube id="JM8tJEWO3Kw" title="CS6635 Scientific Visualization Final Project">
+  A kite in a CFD simulation, rendered with FoxRT. This one was really fun to render.
+</YouTube>
+
+It was a nice change of pace from teapots, and a chance to use the same rendering infrastructure for something completely different. What started as an experiment in volumetric light transport had turned into a renderer I could keep extending and reusing.
+
+## What's next
+
+I'd like to keep working on FoxRT. The big items:
+
+- **GPU support**, on hardware that accelerates ray traversal. It makes no sense to keep it CPU-bound.
+- **Material formats** such as [OpenPBR](https://academysoftwarefoundation.github.io/OpenPBR/) and [MaterialX](https://materialx.org/).
+- Maybe a **[Blender](https://www.blender.org/) add-on**, now that I know Blender better.
+
+My other CS 6620 assignments are on the [course website](https://graphics.cs.utah.edu/courses/cs6620/fall2025/).

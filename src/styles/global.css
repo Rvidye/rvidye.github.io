@@ -1,0 +1,361 @@
+/* Base element styles and the few utilities shared by every page. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* Only real weights and styles: no faux bold or slanted italics. */
+  font-synthesis: none;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
+}
+
+main {
+  flex: 1;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  line-height: var(--leading-tight);
+  text-wrap: balance;
+}
+
+h1 {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: -.045em;
+  font-size: var(--text-2xl);
+  margin-block: 0 var(--space-4);
+}
+
+h2 {
+  font-size: var(--text-xl);
+  margin-block: var(--space-6) var(--space-3);
+}
+
+h3 {
+  font-size: var(--text-lg);
+  margin-block: var(--space-5) var(--space-2);
+}
+
+p {
+  margin-block: 0 var(--space-4);
+  text-wrap: pretty;
+}
+
+strong,
+b {
+  font-weight: 600;
+}
+
+/* Links keep a visible underline alongside the forest/rust palette. */
+a {
+  color: inherit;
+  text-decoration-line: underline;
+  text-decoration-color: var(--color-accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  color: var(--color-rust);
+  text-decoration-thickness: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+  border-radius: 1px;
+}
+
+figure {
+  margin-inline: 0;
+}
+
+img,
+svg,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+code,
+kbd,
+pre,
+samp {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+}
+
+::selection {
+  background: var(--color-selection);
+  color: var(--color-ink);
+}
+
+/* Layout utilities */
+
+.wrap {
+  width: min(100% - 2 * var(--gutter), var(--width-site));
+  margin-inline: auto;
+}
+
+.measure {
+  max-width: var(--measure);
+}
+
+/*
+ * The page grid. Every page lays out its content on the same 12 columns across
+ * the site's width (.wrap), so text, pictures and side notes line up on a few
+ * vertical lines that run through the whole site, as on a poster:
+ *
+ *   left line                                aside line          right line
+ *   |  text: columns 1–8                     |  aside: 9–12      |
+ *   |  pictures, video, sliders: columns 1–12                    |
+ *
+ * The logo and every heading, paragraph, caption and picture start on the left
+ * line; pictures end on the right line, where the menu ends; side notes (facts,
+ * dates, a portrait, a project's picture) start on the aside line. Phones get
+ * one column. Inside rendered Markdown, which can't take classes, the same text
+ * column is `max-width: var(--text-span)`.
+ */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--grid-gap);
+}
+
+.grid > * {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+@media (min-width: 48rem) {
+  .grid > .col-text {
+    grid-column: 1 / 9;
+  }
+
+  .grid > .col-aside {
+    grid-column: 9 / -1;
+  }
+}
+
+/* The one-sentence summary under a page title. */
+.lede {
+  font-size: var(--text-lg);
+  color: var(--color-ink-muted);
+}
+
+/* Page title block and top-level sections, shared by index pages. */
+.page-intro {
+  max-width: min(var(--text-span), var(--measure));
+  margin-bottom: 3rem;
+}
+
+.page-intro h1 { letter-spacing: -.025em; }
+.page-intro > p { max-width: 38rem; color: var(--color-ink-muted); }
+
+.page-section + .page-section {
+  margin-top: var(--space-7);
+}
+
+.page-section > h2:first-child {
+  margin-top: 0;
+}
+
+/*
+ * Editorial rows, used by every index: a title, a margin note (status, date,
+ * host) and a body. On wide screens the margin note moves into a left column,
+ * like an annotation in a notebook, sharing the title's baseline.
+ */
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row-title {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.row-title a {
+  text-decoration-color: var(--color-rule);
+}
+
+.row-title a:hover {
+  text-decoration-color: var(--color-accent);
+}
+
+.row-margin {
+  margin: var(--space-1) 0 var(--space-3);
+}
+
+.row-body > * {
+  margin-block: 0 var(--space-2);
+}
+
+.row-body > :last-child {
+  margin-bottom: 0;
+}
+
+/* Hairlines between rows, for lists of substantial entries. */
+.rows.ruled {
+  border-bottom: 1px solid var(--color-rule);
+}
+
+.rows.ruled > .row {
+  padding-block: var(--space-5) var(--space-6);
+  border-top: 1px solid var(--color-rule);
+}
+
+@media (min-width: 48rem) {
+  .row {
+    display: grid;
+    grid-template-columns: var(--width-meta) minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      'margin title'
+      'margin body';
+    column-gap: var(--space-5);
+  }
+
+  .row-title {
+    grid-area: title;
+    align-self: baseline;
+  }
+
+  .row-margin {
+    grid-area: margin;
+    align-self: baseline;
+    display: block;
+    margin: 0;
+  }
+
+  /* A status list stacks one item per line in the margin column. */
+  .row-margin.inline-list {
+    display: block;
+  }
+
+  .row-margin.inline-list > li + li::before {
+    content: none;
+  }
+
+  .row-body {
+    grid-area: body;
+    margin-top: var(--space-2);
+  }
+}
+
+/* Awards and accepted posters, set in italic like a CV. */
+.recognition {
+  padding: 0;
+  list-style: none;
+  font-style: italic;
+}
+
+/* "← Research" above a detail page's title. */
+.back-link {
+  margin-bottom: var(--space-3);
+}
+
+/* Small sans-serif annotations: dates, status, technologies, link lists. */
+.meta {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+}
+
+/* A run of items separated by middle dots: "Paper · Code · Video". */
+.inline-list {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.inline-list > li + li::before {
+  content: '·';
+  content: '·' / ''; /* decorative: screen readers skip it */
+  padding-inline: 0.45em;
+  color: var(--color-ink-muted);
+}
+
+/* Drafts appear only in `npm run dev`, always labelled. They never reach a build. */
+.draft-marker {
+  color: var(--color-accent);
+  font-family: var(--font-sans);
+  font-weight: 700;
+}
+
+.draft-banner {
+  margin-block: 0 var(--space-5);
+  padding: var(--space-2) var(--space-3);
+  border-left: 2px solid var(--color-accent);
+  background: var(--color-paper-shade);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+}
+
+/* sr-only is the class Markdown footnotes use for their heading. */
+.visually-hidden,
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--gutter);
+  top: var(--space-2);
+  z-index: 1;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-ink);
+  color: var(--color-paper);
+  font-family: var(--font-sans);
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

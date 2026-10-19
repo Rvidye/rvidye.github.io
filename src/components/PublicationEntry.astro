@@ -1,0 +1,113 @@
+---
+/*
+ * One publication in the academic style: type and year, the title (linked to
+ * the paper or poster), authors with the owner's name in bold, the venue, an
+ * award if it won one, then its links as small buttons and the BibTeX.
+ */
+import RecognitionList from './RecognitionList.astro';
+import { SITE } from '../lib/site';
+import type { Publication } from '../lib/content';
+
+interface Props {
+  entry: Publication;
+  /** Heading level for the title, so the entry fits the page's outline. */
+  headingLevel?: 2 | 3 | 4;
+  /** The project page this publication belongs to. */
+  project?: { title: string; href: string } | undefined;
+}
+
+const { entry, headingLevel = 3, project } = Astro.props;
+const { data } = entry;
+const Heading = `h${headingLevel}` as const;
+
+const TYPE_LABEL: Record<Publication['data']['type'], string> = {
+  paper: 'Paper',
+  poster: 'Poster',
+  talk: 'Talk',
+  demo: 'Demo',
+  thesis: 'Thesis',
+  preprint: 'Preprint',
+  report: 'Technical report',
+};
+
+// Fixed order and wording, the academic convention: Paper · Code · Video …
+const LINK_LABELS = [
+  ['paper', 'Paper'],
+  ['poster', 'Poster'],
+  ['publisher', 'Publisher'],
+  ['code', 'Code'],
+  ['video', 'Video'],
+  ['slides', 'Slides'],
+  ['supplemental', 'Supplemental'],
+] as const;
+
+const doiUrl = data.doi ? `https://doi.org/${data.doi}` : undefined;
+const links: { label: string; url: string }[] = LINK_LABELS.flatMap(([key, label]) => {
+  const url = data.links[key];
+  return url ? [{ label, url }] : [];
+});
+if (doiUrl) links.push({ label: 'DOI', url: doiUrl });
+const mainUrl = data.links.paper ?? data.links.poster ?? data.links.publisher ?? doiUrl;
+const names = SITE.authorNames as readonly string[];
+---
+
+<article class="publication">
+  <p class="tag meta">
+    {data.draft && <span class="draft-marker">Draft · </span>}
+    <span class="type">{TYPE_LABEL[data.type]}</span> {data.year}
+  </p>
+  <Heading class="title">{mainUrl ? <a href={mainUrl}>{data.title}</a> : data.title}</Heading>
+  <p class="authors">
+    {
+      data.authors.map((author, i) => (
+        <>
+          {i > 0 && ', '}
+          {names.includes(author) ? <strong>{author}</strong> : author}
+        </>
+      ))
+    }
+  </p>
+  <p class="venue"><cite>{data.venue}</cite>{data.note && `, ${data.note}`}</p>
+  {data.award && <div class="award"><RecognitionList items={[{ label: data.award }]} /></div>}
+  <ul class="actions" role="list" aria-label="Links">
+    {links.map((link) => <li><a href={link.url}>{link.label}</a></li>)}
+    {project && <li><a href={project.href}>Project page</a></li>}
+  </ul>
+  {
+    data.bibtex && (
+      <details>
+        <summary class="meta">BibTeX</summary>
+        <pre><code>{data.bibtex.trim()}</code></pre>
+      </details>
+    )
+  }
+</article>
+
+<style>
+  .publication { margin: 0; }
+  .tag { margin: 0 0 0.35rem; font-size: 0.75rem; }
+  .type {
+    display: inline-block;
+    margin-right: 0.35rem;
+    padding: 0 0.4rem;
+    border: 1px solid var(--color-rust);
+    color: var(--color-rust);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .title { margin: 0 0 0.4rem; font-size: 1.25rem; line-height: 1.35; letter-spacing: -0.01em; }
+  .title a { text-decoration-color: var(--color-rule); }
+  .title a:hover { text-decoration-color: var(--color-rust); }
+  .authors, .venue { margin: 0; font-size: 0.92rem; }
+  .venue { color: var(--color-ink-muted); }
+  cite { font-style: italic; }
+  .award { margin-top: 0.5rem; }
+  .actions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.75rem 0 0; padding: 0; list-style: none; font-family: var(--font-sans); font-size: 0.75rem; }
+  .actions a { display: inline-block; padding: 0.15rem 0.6rem; border: 1px solid var(--color-rule); text-decoration: none; }
+  .actions a:hover { border-color: var(--color-ink); color: var(--color-rust); }
+  details { margin-top: var(--space-2); }
+  summary { cursor: pointer; }
+  pre { margin: var(--space-2) 0 0; padding: var(--space-3); overflow-x: auto; background: var(--color-paper-shade); font-size: var(--text-xs); white-space: pre; }
+</style>

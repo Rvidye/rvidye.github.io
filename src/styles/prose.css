@@ -1,0 +1,196 @@
+/*
+ * Long-form article typography. Wrap rendered Markdown/MDX in an element as
+ * wide as the page grid, with class "prose". Everything starts on the grid's
+ * left line: text runs on the text column at the reading measure; figures,
+ * video, sliders, code and tables run the full width to the right line, with
+ * their captions back on the text column.
+ */
+
+.prose {
+  hyphens: auto;
+  overflow-wrap: break-word;
+  font-size: 1.0625rem;
+  line-height: 1.8;
+}
+
+.prose > * {
+  max-width: min(var(--text-span), var(--measure));
+  margin-inline: 0;
+}
+
+.prose > :is(pre, figure, table) {
+  max-width: 100%;
+}
+
+/* Pictures fill the width, even when the file is narrower than the page. */
+.prose > figure > img,
+.prose > figure > picture > img {
+  width: 100%;
+}
+
+.prose > figure > figcaption {
+  max-width: min(var(--text-span), var(--measure));
+}
+
+.prose > :is(pre, table) {
+  font-size: 0.9rem;
+}
+
+.prose > :first-child {
+  margin-top: 0;
+}
+
+.prose h2 {
+  margin-top: var(--space-7);
+}
+
+.prose h3 {
+  margin-top: var(--space-6);
+}
+
+.prose h4 {
+  font-size: var(--text-base);
+  margin-block: var(--space-5) var(--space-2);
+}
+
+.prose :is(h2, h3, h4) + * {
+  margin-top: 0;
+}
+
+.prose :is(ul, ol) {
+  margin-block: 0 var(--space-4);
+  padding-left: 1.4em;
+}
+
+.prose li {
+  margin-block: var(--space-1);
+}
+
+.prose li::marker {
+  color: var(--color-ink-muted);
+}
+
+.prose blockquote {
+  margin: var(--space-5) 0;
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--color-rule);
+  color: var(--color-ink-muted);
+  font-style: italic;
+}
+
+.prose hr {
+  margin: var(--space-6) 0;
+  width: 4rem;
+  border: 0;
+  border-top: 1px solid var(--color-rule);
+}
+
+/* Inline code */
+.prose :not(pre) > code {
+  padding: 0.1em 0.3em;
+  background: var(--color-paper-shade);
+  border-radius: 2px;
+}
+
+/* Code blocks, highlighted by Shiki's css-variables theme. */
+.prose pre {
+  margin: var(--space-5) 0;
+  padding: var(--space-4);
+  overflow-x: auto;
+  line-height: 1.5;
+  border-left: 2px solid var(--color-rule);
+  tab-size: 2;
+}
+
+.prose kbd {
+  padding: 0 0.3em;
+  border: 1px solid var(--color-rule);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  font-family: var(--font-sans);
+}
+
+/* Figures and captions */
+.prose figure {
+  margin: var(--space-6) 0;
+}
+
+.prose figcaption {
+  margin-top: var(--space-2);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+}
+
+/* Tables scroll sideways on small screens instead of overflowing the page. */
+.prose table {
+  display: block;
+  margin: var(--space-5) 0;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+}
+
+.prose :is(th, td) {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-rule);
+  text-align: left;
+  vertical-align: top;
+}
+
+.prose th {
+  border-bottom-color: var(--color-ink-muted);
+  font-weight: 700;
+}
+
+/* Footnotes */
+.prose sup a {
+  text-decoration: none;
+  padding-inline: 0.1em;
+}
+
+.prose :is(.footnotes, section[data-footnotes]) {
+  margin-top: var(--space-7);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-rule);
+  font-size: var(--text-sm);
+}
+
+/* Syntax colours for Shiki's css-variables theme (prefixed --astro-code-). */
+:root {
+  --astro-code-foreground: var(--color-ink);
+  --astro-code-background: var(--color-paper-shade);
+  --astro-code-token-comment: #5f625c;
+  --astro-code-token-keyword: #8c3a22;
+  --astro-code-token-string: #4c6328;
+  --astro-code-token-string-expression: #4c6328;
+  --astro-code-token-constant: #6a4718;
+  --astro-code-token-function: #2c4a68;
+  --astro-code-token-parameter: var(--color-ink);
+  --astro-code-token-punctuation: #4a4e4b;
+  --astro-code-token-link: var(--color-accent);
+}
+
+/* The same roles, lightened for the dark theme (see tokens.css). */
+:root[data-theme='dark'] {
+  --astro-code-token-comment: #9a9e95;
+  --astro-code-token-keyword: #eba083;
+  --astro-code-token-string: #b5cc85;
+  --astro-code-token-string-expression: #b5cc85;
+  --astro-code-token-constant: #e0bd7c;
+  --astro-code-token-function: #9cc0e4;
+  --astro-code-token-punctuation: #b9bdb5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --astro-code-token-comment: #9a9e95;
+    --astro-code-token-keyword: #eba083;
+    --astro-code-token-string: #b5cc85;
+    --astro-code-token-string-expression: #b5cc85;
+    --astro-code-token-constant: #e0bd7c;
+    --astro-code-token-function: #9cc0e4;
+    --astro-code-token-punctuation: #b9bdb5;
+  }
+}

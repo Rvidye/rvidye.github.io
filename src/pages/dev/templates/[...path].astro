@@ -1,0 +1,48 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+
+// An empty path creates /dev/templates/ only in development.
+export function getStaticPaths() {
+  return import.meta.env.DEV ? [{ params: { path: undefined } }] : [];
+}
+
+const templates = [
+  { id: 'personal-project', title: 'Personal project', file: 'personal-project.mdx', description: 'An idea, how it was made, and where it stands.' },
+  { id: 'research', title: 'Research project', file: 'research-project.mdx', description: 'A question, an approach, and the evidence so far.' },
+  { id: 'blog', title: 'Blog post', file: 'blog-post.mdx', description: 'Room for an idea, a story, or an observation.' },
+  { id: 'technical', title: 'Technical writing', file: 'technical-post.mdx', description: 'A problem worked through with examples and code.' },
+  { id: 'personal', title: 'Personal note', file: 'personal-note.mdx', description: 'Life updates, photographs, and small discoveries.' },
+];
+---
+
+<BaseLayout title="Page templates" noindex>
+  <div class="templates">
+    <header>
+      <p class="meta">Local design specimens</p>
+      <h1>Room for different things.</h1>
+      <p class="lede">Five starting points for the things you make, think about, and want to remember.</p>
+      <p>Each preview uses the same layout as a real page. The text is a writing prompt, and none of these examples is published.</p>
+    </header>
+    <ol role="list">
+      {templates.map((template) => (
+        <li>
+          <h2><a href={`/dev/template/${template.id}/`}>{template.title}</a></h2>
+          <p>{template.description}</p>
+          <p class="meta">Copy <code>templates/{template.file}</code></p>
+        </li>
+      ))}
+    </ol>
+    <p class="meta">Copy projects into <code>src/content/work/</code> and posts into <code>src/content/writing/</code>. Replace the prompts and keep <code>draft: true</code> until ready.</p>
+  </div>
+</BaseLayout>
+
+<style>
+  .templates { max-width: 42rem; margin-inline: auto; }
+  header { margin-bottom: var(--space-7); }
+  h1 { font-size: clamp(2.4rem, 5vw, 3.4rem); letter-spacing: -0.035em; }
+  ol { list-style: none; margin: 0 0 var(--space-6); padding: 0; }
+  li { padding-block: var(--space-5); border-top: 1px solid var(--color-rule); }
+  li h2 { margin: 0 0 var(--space-2); font-size: var(--text-xl); }
+  li p { margin-bottom: var(--space-2); }
+  li p:last-child { margin: 0; }
+</style>

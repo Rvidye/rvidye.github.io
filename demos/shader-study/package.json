@@ -1,0 +1,15 @@
+{
+  "name": "shader-study",
+  "description": "An editable GLSL fragment shader rendered with WebGL 2. Standalone demo, served at /lab/shader-study/.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3",
+    "vite": "^8.3.4"
+  }
+}

@@ -1,0 +1,53 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import { formatDate, isoDate, workUrl, type Post, type Work } from '../lib/content';
+import '../styles/prose.css';
+
+interface Props {
+  post: Post;
+  relatedWork?: Work[];
+  preview?: boolean;
+}
+
+const { post, relatedWork = [], preview = false } = Astro.props;
+const { data } = post;
+const labels = { blog: 'Blog', technical: 'Technical notes', personal: 'Personal notes' };
+---
+
+<BaseLayout title={data.title} description={data.description} section="/blog/" type="article" published={data.date} image={data.image} noindex={preview}>
+  <article class="article-detail grid">
+    <p class="back-link meta"><a href={preview ? '/dev/templates/' : '/blog/'}>← {preview ? 'Templates' : 'Blog'}</a></p>
+    <header class="article-header col-text">
+      {preview && <p class="specimen meta">Design specimen · Example text, not a personal update.</p>}
+      <p class="eyebrow meta">{labels[data.kind]}</p>
+      <h1>{data.title}</h1>
+      <p class="article-description">{data.description}</p>
+      <ul class="inline-list meta" role="list" aria-label="Article details">
+        {data.draft && <li class="draft-marker">Draft</li>}
+        {data.date && <li><time datetime={isoDate(data.date)}>{formatDate(data.date)}</time></li>}
+        {data.updated && <li>Updated <time datetime={isoDate(data.updated)}>{formatDate(data.updated)}</time></li>}
+      </ul>
+    </header>
+
+    {data.draft && !preview && <p class="draft-banner col-text">Draft. This page is visible only in local development.</p>}
+    <div class="prose article-prose"><slot /></div>
+
+    {(relatedWork.length > 0 || data.tags.length > 0) && (
+      <footer class="article-footer col-text meta">
+        {data.tags.length > 0 && <p>{data.tags.join(' · ')}</p>}
+        {relatedWork.length > 0 && <p>Related projects: {relatedWork.map((work, index) => <>{index > 0 && ', '}<a href={workUrl(work)}>{work.data.title}</a></>)}</p>}
+      </footer>
+    )}
+  </article>
+</BaseLayout>
+
+<style>
+  .article-header { margin-bottom: var(--space-7); }
+  .back-link { margin-bottom: var(--space-6); }
+  .eyebrow { margin-bottom: var(--space-2); }
+  h1 { font-size: clamp(2.4rem, 5vw, 3.6rem); line-height: 1.12; letter-spacing: -0.035em; margin-bottom: var(--space-4); }
+  .article-description { font-size: var(--text-lg); color: var(--color-ink-muted); line-height: 1.55; margin-bottom: var(--space-5); }
+  .specimen { color: var(--color-accent); margin-bottom: var(--space-5); }
+  .article-footer { margin-top: var(--space-7); padding-top: var(--space-4); border-top: 1px solid var(--color-rule); }
+  .article-footer p { margin-bottom: var(--space-2); }
+</style>

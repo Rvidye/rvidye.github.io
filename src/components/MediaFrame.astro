@@ -1,0 +1,102 @@
+---
+/*
+ * A piece of work's visual: its real image, or, until one exists, a clearly
+ * marked empty slot drawn as the "missing texture" checkerboard every graphics
+ * programmer has met. Never filled with invented imagery.
+ */
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+
+interface Props {
+  image?: { src: ImageMetadata; alt: string } | undefined;
+  /** What belongs here once it exists, e.g. "Modeling demo video". */
+  slot?: string | undefined;
+  /** Shape of the frame, as a CSS aspect-ratio. */
+  aspect?: string;
+  /** Rendered width of the frame at each breakpoint, for srcset selection. */
+  sizes: string;
+  /** Dark variant, for use on the workbench band. */
+  tone?: 'paper' | 'night';
+}
+
+const { image, slot = 'image or video', aspect = '16 / 9', sizes, tone = 'paper' } = Astro.props;
+const widths = image ? [480, 800, 1200, 1600].filter((w) => w < image.src.width).concat(image.src.width) : [];
+---
+
+{
+  image ? (
+    <Image class="media-frame" src={image.src} alt={image.alt} widths={widths} sizes={sizes} style={`aspect-ratio: ${aspect}`} />
+  ) : (
+    <div class:list={['media-frame', 'media-slot', tone]} style={`aspect-ratio: ${aspect}`} aria-hidden="true">
+      <span class="slot-title">
+        <span class="swatch" />
+        texture not found
+      </span>
+      <span class="slot-note">media slot · {slot}</span>
+    </div>
+  )
+}
+
+<style>
+  .media-frame {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    background: var(--color-paper-shade);
+  }
+
+  .media-slot {
+    --check-a: #eeeadf;
+    --check-b: #e5e0d3;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: var(--space-1);
+    padding: var(--space-3);
+    border: 1px dashed #c9c2b2;
+    background: repeating-conic-gradient(var(--check-a) 0 25%, var(--check-b) 0 50%) 0 0 / 1.5rem 1.5rem;
+    color: var(--color-ink-muted);
+    font-family: var(--font-mono);
+    font-size: var(--text-annotation);
+    line-height: 1.3;
+  }
+
+  .media-slot.night {
+    --check-a: #222623;
+    --check-b: #1d201e;
+    border-color: var(--color-night-rule);
+    color: var(--color-night-muted);
+  }
+
+  .slot-title,
+  .slot-note {
+    align-self: flex-start;
+    padding: 0.15em 0.4em;
+    background: var(--color-paper);
+  }
+
+  .night .slot-title,
+  .night .slot-note {
+    background: var(--color-night);
+  }
+
+  .slot-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45em;
+    color: var(--color-ink);
+  }
+
+  .night .slot-title {
+    color: var(--color-night-ink);
+  }
+
+  /* The classic magenta-and-black placeholder, as a nod. */
+  .swatch {
+    width: 0.7rem;
+    height: 0.7rem;
+    background: repeating-conic-gradient(#ff00ff 0 25%, #000 0 50%) 0 0 / 50% 50%;
+  }
+</style>
