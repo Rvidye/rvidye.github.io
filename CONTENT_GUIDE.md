@@ -334,9 +334,10 @@ gallery:
 - Project awards (`recognition` on a project or demo) and every publication
   are added automatically.
 - The portrait and photos are in `src/assets/about/`; the list of photos and
-  their captions is at the top of `src/pages/about.astro`. Photos go in pairs:
-  on wide screens each pair shares a row at the same height. Re-save phone photos
-  before adding them so their location and camera data are removed.
+  their captions is at the top of `src/pages/about.astro`. They play as a
+  slideshow, in that order; landscape photos fill it and portrait ones are shown
+  whole. Re-save phone photos before adding them so their location and camera
+  data are removed.
 
 Name, description, contact links, and resume path live in `src/lib/site.ts`.
 For a resume, put the final PDF in `public/resume.pdf` and set `RESUME_PATH` to

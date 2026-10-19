@@ -1,7 +1,8 @@
 ---
 /*
- * The homepage showreel: one render at a time, advancing every few seconds,
- * like a slide deck. Frames are pictures with captions, not links to pages.
+ * A slideshow: one picture at a time, advancing every few seconds, like a
+ * slide deck. Used for the showreel of renders on Projects and the photos on
+ * About. Frames are pictures with captions, not links to pages.
  *
  * Without JavaScript the frames sit in a row that scrolls sideways. With it,
  * they stack and cross-fade, with previous, pause and next buttons and a
@@ -22,15 +23,21 @@ interface Props {
   frames: Frame[];
   /** Seconds each frame stays up. */
   seconds?: number;
+  /** Accessible name of the slideshow. */
+  label?: string;
+  /** What one frame is called on the buttons: "Next render", "Next photo". */
+  noun?: string;
+  /** Image sizes for the width the slideshow is placed at. */
+  sizes?: string;
 }
 
-const { frames, seconds = 5 } = Astro.props;
+const { frames, seconds = 5, label = 'Showreel', noun = 'render', sizes = '(min-width: 70rem) 68rem, calc(100vw - 2rem)' } = Astro.props;
 const widths = (src: ImageMetadata) => [640, 960, 1280, 1920].filter((w) => w < src.width).concat(src.width);
 // Frames close to 16:9 fill the stage; squares and portraits are shown whole.
 const fit = (src: ImageMetadata) => (Math.abs(src.width / src.height / (16 / 9) - 1) < 0.15 ? 'cover' : 'contain');
 ---
 
-<div class="reel" style={`--seconds: ${seconds}s`} aria-roledescription="carousel" aria-label="Showreel">
+<div class="reel" style={`--seconds: ${seconds}s`} aria-roledescription="carousel" aria-label={label}>
   <div class="stage">
     <ul class="slides" role="list">
       {
@@ -41,7 +48,7 @@ const fit = (src: ImageMetadata) => (Math.abs(src.width / src.height / (16 / 9) 
                 src={frame.src}
                 alt={frame.alt}
                 widths={widths(frame.src)}
-                sizes="(min-width: 70rem) 68rem, calc(100vw - 2rem)"
+                sizes={sizes}
                 loading={i < 2 ? 'eager' : 'lazy'}
                 style={`object-fit: ${fit(frame.src)}`}
               />
@@ -55,9 +62,9 @@ const fit = (src: ImageMetadata) => (Math.abs(src.width / src.height / (16 / 9) 
   </div>
   <div class="controls" hidden>
     <p class="count" aria-live="off" aria-atomic="true"><span class="index">1</span> / {frames.length}<span class="visually-hidden">: <span class="now">{frames[0]?.caption}</span></span></p>
-    <button type="button" class="prev" aria-label="Previous render"><span aria-hidden="true">←</span></button>
-    <button type="button" class="toggle" aria-label="Pause the showreel"><span aria-hidden="true">Pause</span></button>
-    <button type="button" class="next" aria-label="Next render"><span aria-hidden="true">→</span></button>
+    <button type="button" class="prev" aria-label={`Previous ${noun}`}><span aria-hidden="true">←</span></button>
+    <button type="button" class="toggle" aria-label="Pause the slideshow"><span aria-hidden="true">Pause</span></button>
+    <button type="button" class="next" aria-label={`Next ${noun}`}><span aria-hidden="true">→</span></button>
   </div>
 </div>
 
@@ -106,7 +113,7 @@ const fit = (src: ImageMetadata) => (Math.abs(src.width / src.height / (16 / 9) 
     const update = () => {
       const paused = chosen || hovered || focused || !visible || document.hidden;
       reel.classList.toggle('paused', paused);
-      toggle.setAttribute('aria-label', chosen ? 'Play the showreel' : 'Pause the showreel');
+      toggle.setAttribute('aria-label', chosen ? 'Play the slideshow' : 'Pause the slideshow');
       toggle.firstElementChild!.textContent = chosen ? 'Play' : 'Pause';
     };
 
